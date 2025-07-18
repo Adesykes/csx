@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signIn } from '../lib/supabase';
+import { apiClient } from '../lib/api';
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
@@ -17,12 +17,11 @@ const AdminLogin: React.FC = () => {
     setError('');
 
     try {
-      const { error } = await signIn(email, password);
-      if (error) throw error;
+      await apiClient.login(email, password);
       
       navigate('/admin/appointments');
-    } catch (error: any) {
-      setError(error.message || 'Login failed');
+    } catch (error) {
+      setError('Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { supabase } from '../../lib/supabase';
+import { apiClient } from '../../lib/api';
 import { Appointment } from '../../types';
 import { Calendar, Clock, User, Phone, Mail, DollarSign, CheckCircle, X } from 'lucide-react';
 
@@ -16,13 +16,7 @@ const AdminAppointments: React.FC = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('appointment_date', { ascending: true })
-        .order('start_time', { ascending: true });
-
-      if (error) throw error;
+      const data = await apiClient.getAppointments();
       setAppointments(data || []);
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -33,12 +27,7 @@ const AdminAppointments: React.FC = () => {
 
   const updateAppointmentStatus = async (appointmentId: string, status: string) => {
     try {
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status })
-        .eq('id', appointmentId);
-
-      if (error) throw error;
+      await apiClient.updateAppointment({ id: appointmentId, status });
       
       // Update local state
       setAppointments(prev => 
@@ -108,26 +97,26 @@ const AdminAppointments: React.FC = () => {
         {filteredAppointments.length === 0 ? (
           <div className="text-center py-12">
             <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No appointments</h3>
+                      {format(new Date(appointment.appointmentDate), 'MMM d, yyyy')}
             <p className="mt-1 text-sm text-gray-500">
               {selectedStatus === 'all' 
                 ? 'No appointments found.' 
                 : `No ${selectedStatus} appointments found.`}
             </p>
-          </div>
+                      {appointment.startTime} - {appointment.endTime}
         ) : (
           filteredAppointments.map(appointment => (
             <div key={appointment.id} className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
+                      {appointment.customerPhone}
                     <User className="h-10 w-10 text-gray-400" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      {appointment.customer_name}
-                    </h3>
-                    <p className="text-sm text-gray-600">{appointment.service_name}</p>
+                      {appointment.customerName}
+                      {appointment.customerEmail}
+                    <p className="text-sm text-gray-600">{appointment.serviceName}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -135,7 +124,7 @@ const AdminAppointments: React.FC = () => {
                     {appointment.status}
                   </span>
                   <span className="text-lg font-bold text-green-600">
-                    ${appointment.service_price}
+                    ${appointment.servicePrice}
                   </span>
                 </div>
               </div>

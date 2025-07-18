@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format, addDays, startOfDay } from 'date-fns';
-import { supabase } from '../lib/supabase';
+import { apiClient } from '../lib/api';
 import { Service } from '../types';
 import ServiceCard from '../components/ServiceCard';
 import Calendar from '../components/Calendar';
@@ -36,79 +36,57 @@ const HomePage: React.FC = () => {
 
   const fetchServices = async () => {
     try {
-      if (!supabase) {
-        console.warn('Supabase client not initialized. Using mock data.');
-        // Set mock services data
-        setServices([
-          {
-            id: '1',
-            name: 'Classic Manicure',
-            description: 'Traditional nail care with polish application',
-            price: 35,
-            duration: 45,
-            category: 'Manicure',
-            active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: '2',
-            name: 'Gel Manicure',
-            description: 'Long-lasting gel polish manicure',
-            price: 50,
-            duration: 60,
-            category: 'Manicure',
-            active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: '3',
-            name: 'Classic Pedicure',
-            description: 'Relaxing foot care with polish',
-            price: 45,
-            duration: 60,
-            category: 'Pedicure',
-            active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: '4',
-            name: 'Spa Pedicure',
-            description: 'Luxurious spa treatment for your feet',
-            price: 65,
-            duration: 75,
-            category: 'Pedicure',
-            active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: '5',
-            name: 'Nail Art Design',
-            description: 'Custom nail art and designs',
-            price: 25,
-            duration: 30,
-            category: 'Add-on',
-            active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ]);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .eq('active', true)
-        .order('category', { ascending: true });
-
-      if (error) throw error;
+      const data = await apiClient.getServices();
       setServices(data || []);
     } catch (error) {
       console.error('Error fetching services:', error);
+      // Set mock services data as fallback
+      setServices([
+        {
+          id: '1',
+          name: 'Classic Manicure',
+          description: 'Traditional nail care with polish application',
+          price: 35,
+          duration: 45,
+          category: 'Manicure',
+          active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '2',
+          name: 'Gel Manicure',
+          description: 'Long-lasting gel polish manicure',
+          price: 50,
+          duration: 60,
+          category: 'Manicure',
+          active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '3',
+          name: 'Classic Pedicure',
+          description: 'Relaxing foot care with polish',
+          price: 45,
+          duration: 60,
+          category: 'Pedicure',
+          active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '4',
+          name: 'Spa Pedicure',
+          description: 'Luxurious spa treatment for your feet',
+          price: 65,
+          duration: 75,
+          category: 'Pedicure',
+          active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ]);
     }
   };
 
@@ -161,27 +139,21 @@ const HomePage: React.FC = () => {
     try {
       // Create appointment record
       const appointmentData = {
-        customer_name: formData.customerName,
-        customer_email: formData.customerEmail,
-        customer_phone: formData.customerPhone,
-        service_id: selectedService?.id,
-        service_name: selectedService?.name,
-        service_price: selectedService?.price,
-        appointment_date: format(selectedDate!, 'yyyy-MM-dd'),
-        start_time: selectedTime,
-        end_time: format(new Date(`2000-01-01T${selectedTime}:00`).getTime() + (selectedService?.duration || 60) * 60000, 'HH:mm'),
+        customerName: formData.customerName,
+        customerEmail: formData.customerEmail,
+        customerPhone: formData.customerPhone,
+        serviceId: selectedService?.id,
+        serviceName: selectedService?.name,
+        servicePrice: selectedService?.price,
+        appointmentDate: format(selectedDate!, 'yyyy-MM-dd'),
+        startTime: selectedTime,
+        endTime: format(new Date(`2000-01-01T${selectedTime}:00`).getTime() + (selectedService?.duration || 60) * 60000, 'HH:mm'),
         status: 'pending',
-        payment_status: 'pending',
+        paymentStatus: 'pending',
         notes: formData.notes,
       };
 
-      const { data, error } = await supabase
-        .from('appointments')
-        .insert([appointmentData])
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await apiClient.createAppointment(appointmentData);
 
       // For demo purposes, we'll skip payment and mark as successful
       setBookingSuccess(true);

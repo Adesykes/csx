@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { apiClient } from '../../lib/api';
 import { Service } from '../../types';
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
 
@@ -24,12 +24,7 @@ const AdminServices: React.FC = () => {
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .order('category', { ascending: true });
-
-      if (error) throw error;
+      const data = await apiClient.getServices();
       setServices(data || []);
     } catch (error) {
       console.error('Error fetching services:', error);
@@ -62,18 +57,9 @@ const AdminServices: React.FC = () => {
       };
 
       if (editingService) {
-        const { error } = await supabase
-          .from('services')
-          .update(serviceData)
-          .eq('id', editingService.id);
-
-        if (error) throw error;
+        await apiClient.updateService({ id: editingService.id, ...serviceData });
       } else {
-        const { error } = await supabase
-          .from('services')
-          .insert([serviceData]);
-
-        if (error) throw error;
+        await apiClient.createService(serviceData);
       }
 
       await fetchServices();
@@ -86,12 +72,7 @@ const AdminServices: React.FC = () => {
   const handleDelete = async (serviceId: string) => {
     if (window.confirm('Are you sure you want to delete this service?')) {
       try {
-        const { error } = await supabase
-          .from('services')
-          .delete()
-          .eq('id', serviceId);
-
-        if (error) throw error;
+        await apiClient.deleteService(serviceId);
         await fetchServices();
       } catch (error) {
         console.error('Error deleting service:', error);

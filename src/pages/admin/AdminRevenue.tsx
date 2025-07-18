@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
-import { supabase } from '../../lib/supabase';
+import { apiClient } from '../../lib/api';
 import { Revenue } from '../../types';
 import { DollarSign, TrendingUp, Calendar, Download } from 'lucide-react';
 
@@ -21,48 +21,14 @@ const AdminRevenue: React.FC = () => {
       const monthStart = startOfMonth(selectedMonth);
       const monthEnd = endOfMonth(selectedMonth);
 
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .gte('appointment_date', format(monthStart, 'yyyy-MM-dd'))
-        .lte('appointment_date', format(monthEnd, 'yyyy-MM-dd'))
-        .eq('status', 'completed');
-
-      if (error) throw error;
-
-      // Process data for revenue calculations
-      const revenueData: Revenue[] = [];
-      const dailyRevenue: { [key: string]: { total: number; count: number; services: any } } = {};
-
-      data?.forEach(appointment => {
-        const date = appointment.appointment_date;
-        if (!dailyRevenue[date]) {
-          dailyRevenue[date] = { total: 0, count: 0, services: {} };
-        }
-        
-        dailyRevenue[date].total += appointment.service_price;
-        dailyRevenue[date].count += 1;
-        
-        const serviceName = appointment.service_name;
-        if (!dailyRevenue[date].services[serviceName]) {
-          dailyRevenue[date].services[serviceName] = { count: 0, revenue: 0 };
-        }
-        dailyRevenue[date].services[serviceName].count += 1;
-        dailyRevenue[date].services[serviceName].revenue += appointment.service_price;
-      });
-
-      Object.entries(dailyRevenue).forEach(([date, data]) => {
-        revenueData.push({
-          date,
-          total_revenue: data.total,
-          appointment_count: data.count,
-          services: data.services
-        });
-      });
+      const revenueData = await apiClient.getRevenue(
+        format(monthStart, 'yyyy-MM-dd'),
+        format(monthEnd, 'yyyy-MM-dd')
+      );
 
       setRevenue(revenueData);
-      setTotalRevenue(revenueData.reduce((sum, day) => sum + day.total_revenue, 0));
-      setTotalAppointments(revenueData.reduce((sum, day) => sum + day.appointment_count, 0));
+      setTotalRevenue(revenueData.reduce((sum: number, day: any) => sum + day.totalRevenue, 0));
+      setTotalAppointments(revenueData.reduce((sum: number, day: any) => sum + day.appointmentCount, 0));
     } catch (error) {
       console.error('Error fetching revenue:', error);
     } finally {
@@ -75,8 +41,8 @@ const AdminRevenue: React.FC = () => {
       ['Date', 'Revenue', 'Appointments', 'Services'],
       ...revenue.map(day => [
         day.date,
-        day.total_revenue.toFixed(2),
-        day.appointment_count,
+        day.totalRevenue.toFixed(2),
+        day.appointmentCount,
         Object.entries(day.services).map(([name, data]) => `${name}: ${data.count}`).join('; ')
       ])
     ];
@@ -219,11 +185,11 @@ const AdminRevenue: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <span className="text-green-600 font-semibold">
-                        ${day.total_revenue.toFixed(2)}
+                        ${day.totalRevenue.toFixed(2)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {day.appointment_count}
+                      {day.appointmentCount}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       <div className="space-y-1">
