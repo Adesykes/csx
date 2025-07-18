@@ -2,29 +2,66 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://your-vercel-app.vercel.app/api' 
   : '/api';
 
+export interface Appointment {
+  _id: string;
+  customerName: string;
+  service: string;
+  date: string;
+  time: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+}
+
+interface Service {
+  _id: string;
+  name: string;
+  description: string;
+  duration: number;
+  price: number;
+}
+
+interface AuthResponse {
+  token: string;
+  user: {
+    id: string;
+    email: string;
+    role: string;
+  };
+}
+
+interface Revenue {
+  total: number;
+  appointments: Array<{
+    _id: string;
+    customerName: string;
+    service: string;
+    amount: number;
+    date: string;
+  }>;
+}
+
 class ApiClient {
   private baseUrl: string;
-  private token: string | null = null;
+  private token: string | null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
     this.token = localStorage.getItem('authToken');
   }
 
-  private async request(endpoint: string, options: RequestInit = {}) {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    const headers = {
+    const requestHeaders: HeadersInit = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers || {}),
     };
 
     if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+      requestHeaders.Authorization = `Bearer ${this.token}`;
     }
 
     const response = await fetch(url, {
       ...options,
-      headers,
+      headers: requestHeaders,
     });
 
     if (!response.ok) {
@@ -35,8 +72,8 @@ class ApiClient {
   }
 
   // Auth methods
-  async login(email: string, password: string) {
-    const response = await this.request('/auth/login', {
+  async login(email: string, password: string): Promise<AuthResponse> {
+    const response = await this.request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -49,58 +86,58 @@ class ApiClient {
     return response;
   }
 
-  logout() {
+  logout(): void {
     this.token = null;
     localStorage.removeItem('authToken');
   }
 
   // Services methods
   async getServices() {
-    return this.request('/services');
+    return this.request<Service[]>('/services');
   }
 
-  async createService(serviceData: any) {
-    return this.request('/services', {
+  async createService(serviceData: Omit<Service, '_id'>) {
+    return this.request<Service>('/services', {
       method: 'POST',
       body: JSON.stringify(serviceData),
     });
   }
 
-  async updateService(serviceData: any) {
-    return this.request('/services', {
+  async updateService(serviceId: string, serviceData: Partial<Omit<Service, '_id'>>) {
+    return this.request<Service>(`/services/${serviceId}`, {
       method: 'PUT',
       body: JSON.stringify(serviceData),
     });
   }
 
   async deleteService(serviceId: string) {
-    return this.request(`/services?id=${serviceId}`, {
+    return this.request<void>(`/services/${serviceId}`, {
       method: 'DELETE',
     });
   }
 
   // Appointments methods
   async getAppointments() {
-    return this.request('/appointments');
+    return this.request<Appointment[]>('/appointments');
   }
 
-  async createAppointment(appointmentData: any) {
-    return this.request('/appointments', {
+  async createAppointment(appointmentData: Omit<Appointment, '_id'>) {
+    return this.request<Appointment>('/appointments', {
       method: 'POST',
       body: JSON.stringify(appointmentData),
     });
   }
 
-  async updateAppointment(appointmentData: any) {
-    return this.request('/appointments', {
+  async updateAppointment(appointmentId: string, status: Appointment['status']) {
+    return this.request<Appointment>(`/appointments/${appointmentId}`, {
       method: 'PUT',
-      body: JSON.stringify(appointmentData),
+      body: JSON.stringify({ status }),
     });
   }
 
   // Payment methods
   async createPaymentIntent(amount: number, appointmentId: string) {
-    return this.request('/create-payment-intent', {
+    return this.request<{ clientSecret: string }>('/create-payment-intent', {
       method: 'POST',
       body: JSON.stringify({ amount, appointmentId }),
     });
@@ -108,8 +145,11 @@ class ApiClient {
 
   // Revenue methods
   async getRevenue(startDate: string, endDate: string) {
-    return this.request(`/revenue?startDate=${startDate}&endDate=${endDate}`);
+    return this.request<Revenue>(`/revenue?startDate=${startDate}&endDate=${endDate}`);
   }
 }
+
+export const api = new ApiClient(API_BASE_URL);
+export const getAppointments = () => api.getAppointments();
 
 export const apiClient = new ApiClient(API_BASE_URL);
