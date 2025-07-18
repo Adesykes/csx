@@ -106,8 +106,6 @@ class ApiClient {
     if (response.token) {
       this.token = response.token;
       localStorage.setItem('authToken', response.token);
-      // Force a page reload to update all components with the new auth state
-      window.location.reload();
     }
     
     return response;
@@ -178,6 +176,12 @@ class ApiClient {
   async cancelAppointment(appointmentId: string) {
     return this.request<{ message: string }>(`/appointments/${appointmentId}/cancel`, {
       method: 'PATCH',
+    });
+  }
+
+  async deleteAppointment(appointmentId: string) {
+    return this.request<{ message: string }>(`/appointments/${appointmentId}`, {
+      method: 'DELETE',
     });
   }
 

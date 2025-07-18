@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../lib/api';
+import { isAuthenticated, isAdmin } from '../lib/auth';
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
@@ -10,6 +11,13 @@ const AdminLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  // Redirect if already authenticated as admin
+  useEffect(() => {
+    if (isAuthenticated() && isAdmin()) {
+      navigate('/admin/appointments');
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

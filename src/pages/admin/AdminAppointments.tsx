@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Check, DollarSign, CreditCard, Banknote, X } from 'lucide-react';
+import { Check, DollarSign, CreditCard, Banknote, X, Trash2 } from 'lucide-react';
 import { apiClient } from '../../lib/api';
 import type { Appointment } from '../../lib/api';
 
@@ -85,6 +85,25 @@ const AdminAppointments: React.FC = () => {
       } catch (error) {
         console.error('Error cancelling appointment:', error);
         alert('Failed to cancel appointment. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const deleteAppointment = async (appointmentId: string, customerName: string, service: string, date: string) => {
+    const confirmMessage = `⚠️ PERMANENT DELETE WARNING ⚠️\n\nAre you sure you want to PERMANENTLY DELETE this appointment?\n\nCustomer: ${customerName}\nService: ${service}\nDate: ${date}\n\nThis action CANNOT be undone and will remove the appointment completely from the system.`;
+    
+    if (window.confirm(confirmMessage)) {
+      setLoading(true);
+      try {
+        await apiClient.deleteAppointment(appointmentId);
+        // Refresh appointments list
+        await fetchAppointments();
+        alert('Appointment permanently deleted from the system.');
+      } catch (error) {
+        console.error('Error deleting appointment:', error);
+        alert('Failed to delete appointment. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -184,6 +203,20 @@ const AdminAppointments: React.FC = () => {
                         Cancel
                       </button>
                     )}
+                    <button
+                      onClick={() => deleteAppointment(
+                        appointment._id, 
+                        appointment.customerName, 
+                        appointment.service, 
+                        format(new Date(appointment.date), 'MMM d, yyyy')
+                      )}
+                      disabled={loading}
+                      className="flex items-center px-3 py-1 bg-red-800 text-white rounded hover:bg-red-900 disabled:opacity-50 text-sm border border-red-900"
+                      title="Permanently delete this appointment"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </button>
                   </div>
                 </td>
               </tr>

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle } from 'lucide-react';
+import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut } from 'lucide-react';
+import { clearAuthToken } from '../lib/auth';
+import { apiClient } from '../lib/api';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,8 +10,31 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLogoutNotification, setShowLogoutNotification] = useState(false);
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isAdminLoginPage = location.pathname === '/admin';
+  const showAdminNavigation = isAdminRoute && !isAdminLoginPage;
+
+  // Track previous route to detect admin -> customer navigation
+  const [wasAdminRoute, setWasAdminRoute] = useState(false);
+
+  const handleLogout = (reason: string) => {
+    clearAuthToken();
+    console.log(`Auto-logout: ${reason}`);
+    setShowLogoutNotification(true);
+    setTimeout(() => setShowLogoutNotification(false), 3000); // Hide after 3 seconds
+  };
+
+  useEffect(() => {
+    // If we were on an admin route and now we're on a customer route, logout
+    if (wasAdminRoute && !isAdminRoute && !location.pathname.startsWith('/admin')) {
+      handleLogout('Navigated from admin to customer view');
+    }
+    
+    // Update the tracking state
+    setWasAdminRoute(isAdminRoute);
+  }, [location.pathname, isAdminRoute, wasAdminRoute]);
 
   const adminNavLinks = [
     { href: '/admin/appointments', label: 'Appointments', icon: Calendar },
@@ -25,7 +50,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2">
+            <Link 
+              to="/" 
+              className="flex items-center space-x-2"
+              onClick={() => {
+                if (isAdminRoute) {
+                  handleLogout('Clicked logo from admin route');
+                }
+              }}
+            >
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">CSX</span>
               </div>
@@ -37,7 +70,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
-              {isAdminRoute ? (
+              {showAdminNavigation ? (
                 <>
                   {adminNavLinks.map((link) => {
                     const Icon = link.icon;
@@ -58,11 +91,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   })}
                   <Link
                     to="/"
+                    onClick={() => {
+                      handleLogout('Clicked Customer View from admin');
+                    }}
                     className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                   >
                     <Users className="h-4 w-4" />
                     <span>Customer View</span>
                   </Link>
+                  <button
+                    onClick={() => {
+                      apiClient.logout();
+                    }}
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:text-red-900 hover:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </button>
                 </>
               ) : (
                 <>
@@ -114,7 +159,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {isMobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
-              {isAdminRoute ? (
+              {showAdminNavigation ? (
                 <>
                   {adminNavLinks.map((link) => {
                     const Icon = link.icon;
@@ -137,11 +182,24 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <Link
                     to="/"
                     className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      handleLogout('Clicked Customer View from admin mobile menu');
+                    }}
                   >
                     <Users className="h-5 w-5" />
                     <span>Customer View</span>
                   </Link>
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      apiClient.logout();
+                    }}
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-900 hover:bg-red-50 w-full text-left"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span>Logout</span>
+                  </button>
                 </>
               ) : (
                 <>
@@ -195,6 +253,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
       </footer>
+
+      {/* Logout Notification */}
+      {showLogoutNotification && (
+        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce">
+          <p className="text-sm font-medium">✓ Logged out from admin session</p>
+        </div>
+      )}
     </div>
   );
 };
