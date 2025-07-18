@@ -51,7 +51,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     switch (req.method) {
       case 'GET':
-        const services = await servicesCollection.find().toArray();
+        // Check if user is authenticated (admin)
+        const isAdmin = await verifyToken(req);
+        
+        // For admin users, return all services; for customers, only return active services
+        const query = isAdmin ? {} : { active: true };
+        const services = await servicesCollection.find(query).toArray();
+        
         const transformedServices = services.map(service => ({
           id: service._id.toString(),
           name: service.name,

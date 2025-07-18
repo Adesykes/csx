@@ -152,11 +152,15 @@ const AdminServices: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select Category</option>
-                <option value="Manicure">Manicure</option>
-                <option value="Pedicure">Pedicure</option>
                 <option value="Gel Polish">Gel Polish</option>
                 <option value="Nail Art">Nail Art</option>
-                <option value="Special Services">Special Services</option>
+                <option value="Builder Gel">Builder Gel</option>
+                <option value="Builder Gel Infill">Builder Gel Infill</option>
+                <option value="Builder Gel Overlay with Nail Art">Builder Gel Overlay with Nail Art</option>
+                <option value="Builder Gel Infill with Nail Art">Builder Gel Infill with Nail Art</option>
+                <option value="Soak Off">Soak Off</option>
+                <option value="Soak Off and New Set">Soak Off and New Set</option>
+                <option value="Gel Polish Removal and New">Gel Polish Removal and New</option>
               </select>
             </div>
             <div>

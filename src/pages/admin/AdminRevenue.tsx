@@ -1,13 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { apiClient } from '../../lib/api';
-import { Revenue } from '../../types';
 import { DollarSign, TrendingUp, Calendar, Download, CreditCard, Banknote, RefreshCw } from 'lucide-react';
 
+type DateRangeType = 'month' | 'financial-year' | 'custom';
+
+// Define the actual API response type
+interface ApiRevenueData {
+  date: string;
+  totalRevenue: number;
+  appointmentCount: number;
+  onlinePayments: number;
+  cashPayments: number;
+  services: Record<string, { 
+    count: number; 
+    revenue: number; 
+    onlineRevenue: number; 
+    cashRevenue: number; 
+  }>;
+}
+
 const AdminRevenue: React.FC = () => {
-  const [revenue, setRevenue] = useState<Revenue[]>([]);
+  const [revenue, setRevenue] = useState<ApiRevenueData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateRangeType, setDateRangeType] = useState<DateRangeType>('month');
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [selectedFinancialYear, setSelectedFinancialYear] = useState(new Date().getFullYear());
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalAppointments, setTotalAppointments] = useState(0);
   const [totalOnlinePayments, setTotalOnlinePayments] = useState(0);
@@ -15,20 +35,49 @@ const AdminRevenue: React.FC = () => {
 
   useEffect(() => {
     fetchRevenue();
-  }, [selectedMonth]);
+  }, [selectedMonth, selectedFinancialYear, customStartDate, customEndDate, dateRangeType]);
+
+  const getDateRange = () => {
+    switch (dateRangeType) {
+      case 'month':
+        return {
+          start: format(startOfMonth(selectedMonth), 'yyyy-MM-dd'),
+          end: format(endOfMonth(selectedMonth), 'yyyy-MM-dd')
+        };
+      case 'financial-year':
+        // Financial year runs from April to March
+        const financialStart = new Date(selectedFinancialYear, 3, 1); // April 1st
+        const financialEnd = new Date(selectedFinancialYear + 1, 2, 31); // March 31st next year
+        return {
+          start: format(financialStart, 'yyyy-MM-dd'),
+          end: format(financialEnd, 'yyyy-MM-dd')
+        };
+      case 'custom':
+        return {
+          start: customStartDate,
+          end: customEndDate
+        };
+      default:
+        return {
+          start: format(startOfMonth(selectedMonth), 'yyyy-MM-dd'),
+          end: format(endOfMonth(selectedMonth), 'yyyy-MM-dd')
+        };
+    }
+  };
 
   const fetchRevenue = async () => {
     try {
       setLoading(true);
-      const monthStart = startOfMonth(selectedMonth);
-      const monthEnd = endOfMonth(selectedMonth);
+      const { start, end } = getDateRange();
+      
+      if (!start || !end) {
+        setLoading(false);
+        return;
+      }
 
-      const revenueData = await apiClient.getRevenue(
-        format(monthStart, 'yyyy-MM-dd'),
-        format(monthEnd, 'yyyy-MM-dd')
-      );
+      const revenueData = await apiClient.getRevenue(start, end);
 
-      setRevenue(revenueData);
+      setRevenue(revenueData as unknown as ApiRevenueData[]);
       setTotalRevenue(revenueData.reduce((sum: number, day: any) => sum + day.totalRevenue, 0));
       setTotalAppointments(revenueData.reduce((sum: number, day: any) => sum + day.appointmentCount, 0));
       setTotalOnlinePayments(revenueData.reduce((sum: number, day: any) => sum + (day.onlinePayments || 0), 0));
@@ -41,12 +90,15 @@ const AdminRevenue: React.FC = () => {
   };
 
   const exportToCSV = () => {
+    const { start, end } = getDateRange();
     const csvData = [
-      ['Date', 'Revenue', 'Appointments', 'Services'],
+      ['Date', 'Revenue', 'Appointments', 'Online Payments', 'Cash Payments', 'Services'],
       ...revenue.map(day => [
         day.date,
         day.totalRevenue.toFixed(2),
         day.appointmentCount,
+        day.onlinePayments?.toFixed(2) || '0.00',
+        day.cashPayments?.toFixed(2) || '0.00',
         Object.entries(day.services).map(([name, data]) => `${name}: ${data.count}`).join('; ')
       ])
     ];
@@ -56,7 +108,17 @@ const AdminRevenue: React.FC = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `revenue-${format(selectedMonth, 'yyyy-MM')}.csv`;
+    
+    let filename = 'revenue';
+    if (dateRangeType === 'month') {
+      filename += `-${format(selectedMonth, 'yyyy-MM')}`;
+    } else if (dateRangeType === 'financial-year') {
+      filename += `-FY${selectedFinancialYear}-${selectedFinancialYear + 1}`;
+    } else if (dateRangeType === 'custom') {
+      filename += `-${start}_to_${end}`;
+    }
+    
+    a.download = `${filename}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -68,6 +130,28 @@ const AdminRevenue: React.FC = () => {
       months.push(month);
     }
     return months;
+  };
+
+  const generateFinancialYearOptions = () => {
+    const years = [];
+    const currentYear = new Date().getFullYear();
+    for (let i = currentYear - 5; i <= currentYear + 1; i++) {
+      years.push(i);
+    }
+    return years;
+  };
+
+  const getDateRangeLabel = () => {
+    switch (dateRangeType) {
+      case 'month':
+        return format(selectedMonth, 'MMMM yyyy');
+      case 'financial-year':
+        return `Financial Year ${selectedFinancialYear}/${selectedFinancialYear + 1} (Apr-Mar)`;
+      case 'custom':
+        return customStartDate && customEndDate ? `${customStartDate} to ${customEndDate}` : 'Custom Range';
+      default:
+        return '';
+    }
   };
 
   if (loading) {
@@ -97,17 +181,6 @@ const AdminRevenue: React.FC = () => {
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
-          <select
-            value={format(selectedMonth, 'yyyy-MM')}
-            onChange={(e) => setSelectedMonth(new Date(e.target.value + '-01'))}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {generateMonthOptions().map(month => (
-              <option key={format(month, 'yyyy-MM')} value={format(month, 'yyyy-MM')}>
-                {format(month, 'MMMM yyyy')}
-              </option>
-            ))}
-          </select>
           <button
             onClick={exportToCSV}
             className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center space-x-2"
@@ -115,6 +188,82 @@ const AdminRevenue: React.FC = () => {
             <Download className="h-4 w-4" />
             <span>Export CSV</span>
           </button>
+        </div>
+      </div>
+
+      {/* Date Range Selection */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Date Range</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Range Type</label>
+            <select
+              value={dateRangeType}
+              onChange={(e) => setDateRangeType(e.target.value as DateRangeType)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="month">Monthly</option>
+              <option value="financial-year">Financial Year (Apr-Mar)</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+
+          {dateRangeType === 'month' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Month</label>
+              <select
+                value={format(selectedMonth, 'yyyy-MM')}
+                onChange={(e) => setSelectedMonth(new Date(e.target.value + '-01'))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {generateMonthOptions().map(month => (
+                  <option key={format(month, 'yyyy-MM')} value={format(month, 'yyyy-MM')}>
+                    {format(month, 'MMMM yyyy')}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {dateRangeType === 'financial-year' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Financial Year</label>
+              <select
+                value={selectedFinancialYear}
+                onChange={(e) => setSelectedFinancialYear(parseInt(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {generateFinancialYearOptions().map(year => (
+                  <option key={year} value={year}>
+                    {year}/{year + 1} (Apr {year} - Mar {year + 1})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {dateRangeType === 'custom' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -183,7 +332,7 @@ const AdminRevenue: React.FC = () => {
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">
-            Daily Revenue - {format(selectedMonth, 'MMMM yyyy')}
+            Daily Revenue - {getDateRangeLabel()}
           </h2>
         </div>
         <div className="overflow-x-auto">
