@@ -16,11 +16,15 @@ const AdminLogin: React.FC = () => {
     setIsLoading(true);
     setError('');
 
+    console.log('Login attempt with:', { email, password: '***' });
+
     try {
-      await apiClient.login(email, password);
+      const response = await apiClient.login(email, password);
+      console.log('Login successful:', response);
       
       navigate('/admin/appointments');
     } catch (error) {
+      console.error('Login error:', error);
       setError('Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
@@ -53,6 +57,7 @@ const AdminLogin: React.FC = () => {
                   id="email"
                   name="email"
                   type="email"
+                  autoComplete="username"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -76,6 +81,7 @@ const AdminLogin: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none rounded-none relative block w-full px-3 py-2 pl-10 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                   placeholder="Password"
+                  autoComplete="current-password"
                 />
                 <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                 <button

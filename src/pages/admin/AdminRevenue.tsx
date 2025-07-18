@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { apiClient } from '../../lib/api';
 import { Revenue } from '../../types';
-import { DollarSign, TrendingUp, Calendar, Download } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, Download, CreditCard, Banknote, RefreshCw } from 'lucide-react';
 
 const AdminRevenue: React.FC = () => {
   const [revenue, setRevenue] = useState<Revenue[]>([]);
@@ -10,6 +10,8 @@ const AdminRevenue: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalAppointments, setTotalAppointments] = useState(0);
+  const [totalOnlinePayments, setTotalOnlinePayments] = useState(0);
+  const [totalCashPayments, setTotalCashPayments] = useState(0);
 
   useEffect(() => {
     fetchRevenue();
@@ -29,6 +31,8 @@ const AdminRevenue: React.FC = () => {
       setRevenue(revenueData);
       setTotalRevenue(revenueData.reduce((sum: number, day: any) => sum + day.totalRevenue, 0));
       setTotalAppointments(revenueData.reduce((sum: number, day: any) => sum + day.appointmentCount, 0));
+      setTotalOnlinePayments(revenueData.reduce((sum: number, day: any) => sum + (day.onlinePayments || 0), 0));
+      setTotalCashPayments(revenueData.reduce((sum: number, day: any) => sum + (day.cashPayments || 0), 0));
     } catch (error) {
       console.error('Error fetching revenue:', error);
     } finally {
@@ -85,6 +89,14 @@ const AdminRevenue: React.FC = () => {
           <p className="mt-2 text-gray-600">Track your salon's financial performance</p>
         </div>
         <div className="flex items-center space-x-4">
+          <button
+            onClick={fetchRevenue}
+            disabled={loading}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
           <select
             value={format(selectedMonth, 'yyyy-MM')}
             onChange={(e) => setSelectedMonth(new Date(e.target.value + '-01'))}
@@ -107,7 +119,7 @@ const AdminRevenue: React.FC = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -115,7 +127,7 @@ const AdminRevenue: React.FC = () => {
             </div>
             <div className="ml-4">
               <div className="text-sm font-medium text-gray-500">Total Revenue</div>
-              <div className="text-2xl font-bold text-gray-900">${totalRevenue.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-gray-900">£{totalRevenue.toFixed(2)}</div>
             </div>
           </div>
         </div>
@@ -133,12 +145,34 @@ const AdminRevenue: React.FC = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
+              <CreditCard className="h-8 w-8 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <div className="text-sm font-medium text-gray-500">Online Payments</div>
+              <div className="text-2xl font-bold text-gray-900">£{totalOnlinePayments.toFixed(2)}</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <Banknote className="h-8 w-8 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <div className="text-sm font-medium text-gray-500">Cash Payments</div>
+              <div className="text-2xl font-bold text-gray-900">£{totalCashPayments.toFixed(2)}</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
               <TrendingUp className="h-8 w-8 text-purple-600" />
             </div>
             <div className="ml-4">
               <div className="text-sm font-medium text-gray-500">Average per Appointment</div>
               <div className="text-2xl font-bold text-gray-900">
-                ${totalAppointments > 0 ? (totalRevenue / totalAppointments).toFixed(2) : '0.00'}
+                £{totalAppointments > 0 ? (totalRevenue / totalAppointments).toFixed(2) : '0.00'}
               </div>
             </div>
           </div>
@@ -185,7 +219,7 @@ const AdminRevenue: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <span className="text-green-600 font-semibold">
-                        ${day.totalRevenue.toFixed(2)}
+                        £{day.totalRevenue.toFixed(2)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -195,7 +229,7 @@ const AdminRevenue: React.FC = () => {
                       <div className="space-y-1">
                         {Object.entries(day.services).map(([serviceName, data]) => (
                           <div key={serviceName} className="text-xs">
-                            <span className="font-medium">{serviceName}:</span> {data.count} (${data.revenue.toFixed(2)})
+                            <span className="font-medium">{serviceName}:</span> {data.count} (£{data.revenue.toFixed(2)})
                           </div>
                         ))}
                       </div>

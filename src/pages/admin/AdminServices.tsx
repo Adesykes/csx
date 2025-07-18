@@ -57,8 +57,10 @@ const AdminServices: React.FC = () => {
       };
 
       if (editingService) {
-        await apiClient.updateService({ id: editingService.id, ...serviceData });
+        // For update, pass serviceData directly
+        await apiClient.updateService(editingService.id, serviceData);
       } else {
+        // For create, pass serviceData directly
         await apiClient.createService(serviceData);
       }
 
@@ -66,6 +68,7 @@ const AdminServices: React.FC = () => {
       resetForm();
     } catch (error) {
       console.error('Error saving service:', error);
+      alert('Error saving service. Please try again.');
     }
   };
 
@@ -158,7 +161,7 @@ const AdminServices: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price ($)
+                Price (£)
               </label>
               <input
                 type="number"
@@ -247,7 +250,7 @@ const AdminServices: React.FC = () => {
             </div>
             <p className="text-gray-600 text-sm mb-3">{service.description}</p>
             <div className="flex justify-between items-center">
-              <span className="text-lg font-bold text-green-600">${service.price}</span>
+              <span className="text-lg font-bold text-green-600">£{service.price}</span>
               <span className="text-sm text-gray-500">{service.duration} min</span>
             </div>
             <div className="mt-3 flex justify-between items-center">

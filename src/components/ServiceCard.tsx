@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, DollarSign } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { Service } from '../types';
 
 interface ServiceCardProps {
@@ -21,7 +21,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isSelected, onSelect
       <div className="flex justify-between items-start mb-3">
         <h3 className="text-lg font-semibold text-gray-900">{service.name}</h3>
         <div className="flex items-center space-x-1 text-green-600 font-bold">
-          <DollarSign className="h-4 w-4" />
+          <span>£</span>
           <span>{service.price}</span>
         </div>
       </div>

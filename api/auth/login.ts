@@ -1,6 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getDatabase } from '../../lib/mongodb';
-import { comparePassword, generateToken } from '../../lib/auth';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -23,29 +26,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const db = await getDatabase();
-    const usersCollection = db.collection('users');
-    
-    const user = await usersCollection.findOne({ email });
-    
-    if (!user) {
+    // Check against environment variables
+    if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const isValidPassword = await comparePassword(password, user.password);
-    
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+    const user = {
+      _id: 'admin',
+      email: process.env.ADMIN_EMAIL,
+      role: 'admin'
+    };
 
-    const token = generateToken(user._id.toString());
+    const token = jwt.sign({
+      userId: user._id.toString(),
+      email: user.email,
+      role: user.role || 'user'
+    }, JWT_SECRET, { expiresIn: '24h' });
     
     return res.status(200).json({
       token,
       user: {
         id: user._id,
         email: user.email,
-        name: user.name
+        role: user.role
       }
     });
   } catch (error) {

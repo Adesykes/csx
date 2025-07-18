@@ -1,13 +1,16 @@
 export interface Service {
-  id: string;
+  _id?: string;  // MongoDB ID
+  id?: string;   // Transformed ID
   name: string;
   description: string;
   price: number;
   duration: number; // in minutes
   category: string;
   active: boolean;
-  created_at: string;
-  updated_at: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Appointment {
@@ -38,17 +41,23 @@ export interface TimeSlot {
   service_id?: string;
 }
 
-export interface BusinessHours {
-  id: string;
-  day_of_week: number; // 0-6 (Sunday-Saturday)
-  open_time: string;
-  close_time: string;
-  is_open: boolean;
+export interface DaySchedule {
+  day: string;
+  openTime: string;
+  closeTime: string;
+  isOpen: boolean;
 }
 
 export interface Revenue {
   date: string;
   totalRevenue: number;
   appointmentCount: number;
-  services: Record<string, { count: number; revenue: number }>;
+  onlinePayments: number;
+  cashPayments: number;
+  services: Record<string, { 
+    count: number; 
+    revenue: number; 
+    onlineRevenue: number; 
+    cashRevenue: number; 
+  }>;
 }

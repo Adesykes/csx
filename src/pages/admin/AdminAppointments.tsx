@@ -1,31 +1,95 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { getAppointments } from '../../lib/api';
+import { Check, DollarSign, CreditCard, Banknote, X } from 'lucide-react';
+import { apiClient } from '../../lib/api';
+import type { Appointment } from '../../lib/api';
 
-interface Appointment {
+interface AppointmentData extends Appointment {
   _id: string;
   customerName: string;
   service: string;
   date: string;
   time: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  paymentMethod: 'online' | 'cash';
+  paymentStatus: 'pending' | 'paid' | 'refunded';
+  servicePrice: number;
 }
 
 const AdminAppointments: React.FC = () => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentData[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const data = await getAppointments();
-        setAppointments(data);
-      } catch (error) {
-        console.error('Error fetching appointments:', error);
-      }
-    };
-
     fetchAppointments();
   }, []);
+
+  const fetchAppointments = async () => {
+    try {
+      const data = await apiClient.getAppointments();
+      setAppointments(data as AppointmentData[]);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    }
+  };
+
+  const markPaymentReceived = async (appointmentId: string) => {
+    setLoading(true);
+    try {
+      await apiClient.markPaymentReceived(appointmentId, 'paid');
+      // Refresh appointments list
+      await fetchAppointments();
+      
+      // Show success message and suggest refreshing revenue
+      alert('Payment marked as received! Remember to refresh the Revenue page to see updated totals.');
+    } catch (error) {
+      console.error('Error marking payment as received:', error);
+      alert('Failed to mark payment as received. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateAppointmentStatus = async (appointmentId: string, status: AppointmentData['status']) => {
+    setLoading(true);
+    try {
+      if (status === 'cancelled') {
+        // Use the dedicated cancellation endpoint for cancelled status
+        await apiClient.cancelAppointment(appointmentId);
+      } else {
+        // Use the regular update endpoint for other status changes
+        await apiClient.updateAppointment(appointmentId, status);
+      }
+      // Refresh appointments list
+      await fetchAppointments();
+      
+      // Show success message for completed appointments
+      if (status === 'completed') {
+        alert('Appointment marked as completed! Remember to refresh the Revenue page to see updated totals.');
+      }
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+      alert('Failed to update appointment status. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelAppointment = async (appointmentId: string, customerName: string) => {
+    if (window.confirm(`Are you sure you want to cancel the appointment for ${customerName}?`)) {
+      setLoading(true);
+      try {
+        await apiClient.cancelAppointment(appointmentId);
+        // Refresh appointments list
+        await fetchAppointments();
+      } catch (error) {
+        console.error('Error cancelling appointment:', error);
+        alert('Failed to cancel appointment. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   return (
     <div className="p-6">
@@ -38,7 +102,11 @@ const AdminAppointments: React.FC = () => {
               <th className="py-2 px-4 border-b">Service</th>
               <th className="py-2 px-4 border-b">Date</th>
               <th className="py-2 px-4 border-b">Time</th>
+              <th className="py-2 px-4 border-b">Price</th>
+              <th className="py-2 px-4 border-b">Payment Method</th>
+              <th className="py-2 px-4 border-b">Payment Status</th>
               <th className="py-2 px-4 border-b">Status</th>
+              <th className="py-2 px-4 border-b">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -50,20 +118,83 @@ const AdminAppointments: React.FC = () => {
                   {format(new Date(appointment.date), 'MMM d, yyyy')}
                 </td>
                 <td className="py-2 px-4 border-b">{appointment.time}</td>
+                <td className="py-2 px-4 border-b">${appointment.servicePrice}</td>
+                <td className="py-2 px-4 border-b">
+                  <div className="flex items-center">
+                    {appointment.paymentMethod === 'online' ? (
+                      <>
+                        <CreditCard className="h-4 w-4 mr-1 text-blue-600" />
+                        <span>Online</span>
+                      </>
+                    ) : (
+                      <>
+                        <Banknote className="h-4 w-4 mr-1 text-green-600" />
+                        <span>Cash</span>
+                      </>
+                    )}
+                  </div>
+                </td>
                 <td className="py-2 px-4 border-b">
                   <span className={`px-2 py-1 rounded-full text-sm ${
-                    appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                    appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    appointment.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                    appointment.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                    appointment.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-red-100 text-red-800'
                   }`}>
-                    {appointment.status}
+                    {appointment.paymentStatus}
                   </span>
+                </td>
+                <td className="py-2 px-4 border-b">
+                  <select
+                    value={appointment.status}
+                    onChange={(e) => updateAppointmentStatus(appointment._id, e.target.value as AppointmentData['status'])}
+                    disabled={loading}
+                    className="px-2 py-1 rounded border border-gray-300 text-sm"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </td>
+                <td className="py-2 px-4 border-b">
+                  <div className="flex items-center gap-2">
+                    {appointment.paymentMethod === 'cash' && appointment.paymentStatus === 'pending' && (
+                      <button
+                        onClick={() => markPaymentReceived(appointment._id)}
+                        disabled={loading}
+                        className="flex items-center px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 text-sm"
+                      >
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        Mark Paid
+                      </button>
+                    )}
+                    {appointment.paymentStatus === 'paid' && (
+                      <div className="flex items-center text-green-600 text-sm">
+                        <Check className="h-4 w-4 mr-1" />
+                        Paid
+                      </div>
+                    )}
+                    {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
+                      <button
+                        onClick={() => cancelAppointment(appointment._id, appointment.customerName)}
+                        disabled={loading}
+                        className="flex items-center px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 text-sm"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Cancel
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {appointments.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            No appointments found.
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, DollarSign, Settings, Menu, X } from 'lucide-react';
+import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,6 +15,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { href: '/admin/appointments', label: 'Appointments', icon: Calendar },
     { href: '/admin/services', label: 'Services', icon: Settings },
     { href: '/admin/revenue', label: 'Revenue', icon: DollarSign },
+    { href: '/admin/business-hours', label: 'Business Hours', icon: Clock },
+    { href: '/admin/closure-dates', label: 'Closure Dates', icon: XCircle },
   ];
 
   return (
@@ -73,6 +75,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     }`}
                   >
                     Book Appointment
+                  </Link>
+                  <Link
+                    to="/cancel"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      location.pathname === '/cancel'
+                        ? 'bg-red-100 text-red-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    Cancel Appointment
                   </Link>
                   <Link
                     to="/admin"
@@ -143,6 +155,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Book Appointment
+                  </Link>
+                  <Link
+                    to="/cancel"
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      location.pathname === '/cancel'
+                        ? 'bg-red-100 text-red-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Cancel Appointment
                   </Link>
                   <Link
                     to="/admin"

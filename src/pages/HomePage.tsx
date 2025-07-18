@@ -1,335 +1,303 @@
-import React, { useState, useEffect } from 'react';
-import { format, addDays, startOfDay } from 'date-fns';
+import { useState, useEffect, useCallback } from 'react';
+import { addDays, startOfDay, format } from 'date-fns';
 import { apiClient } from '../lib/api';
 import { Service } from '../types';
+import { TimeSlot } from '../lib/api';
 import ServiceCard from '../components/ServiceCard';
 import Calendar from '../components/Calendar';
 import TimeSlotPicker from '../components/TimeSlotPicker';
 import BookingForm from '../components/BookingForm';
-import { CheckCircle, Clock, DollarSign, Calendar as CalendarIcon } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 
-interface BookingStep {
-  step: 'service' | 'datetime' | 'details' | 'confirmation';
+interface DaySchedule {
+  day: string;
+  isOpen: boolean;
+  openTime: string;
+  closeTime: string;
 }
 
-const HomePage: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState<BookingStep['step']>('service');
+type BookingStep = 'service' | 'datetime' | 'details' | 'confirmation';
+
+const HomePage = (): JSX.Element => {
+  // State management
+  const [currentStep, setCurrentStep] = useState<BookingStep>('service');
   const [services, setServices] = useState<Service[]>([]);
+  const [businessHours, setBusinessHours] = useState<DaySchedule[]>([]);
+  const [closureDates, setClosureDates] = useState<string[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
-  const [availableSlots, setAvailableSlots] = useState<{time: string, available: boolean}[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [isLoading] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
-  useEffect(() => {
-    fetchServices();
-    generateAvailableDates();
-  }, []);
+  // Remove early return for error, move error rendering into main return below
 
-  useEffect(() => {
-    if (selectedDate && selectedService) {
-      generateTimeSlots();
-    }
-  }, [selectedDate, selectedService]);
-
-  const fetchServices = async () => {
+  // Generate time slots based on business hours
+  const generateTimeSlots = useCallback(async (dateToUse?: Date) => {
+    const targetDate = dateToUse || selectedDate;
+    if (!targetDate || !selectedService?.duration || businessHours.length === 0) return;
+    
     try {
-      const data = await apiClient.getServices();
-      setServices(data || []);
-    } catch (error) {
-      console.error('Error fetching services:', error);
-      // Set mock services data as fallback
-      setServices([
-        {
-          id: '1',
-          name: 'Classic Manicure',
-          description: 'Traditional nail care with polish application',
-          price: 35,
-          duration: 45,
-          category: 'Manicure',
-          active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          name: 'Gel Manicure',
-          description: 'Long-lasting gel polish manicure',
-          price: 50,
-          duration: 60,
-          category: 'Manicure',
-          active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: '3',
-          name: 'Classic Pedicure',
-          description: 'Relaxing foot care with polish',
-          price: 45,
-          duration: 60,
-          category: 'Pedicure',
-          active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: '4',
-          name: 'Spa Pedicure',
-          description: 'Luxurious spa treatment for your feet',
-          price: 65,
-          duration: 75,
-          category: 'Pedicure',
-          active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+      // Get the day of the week
+      const dayOfWeek = format(targetDate, 'EEEE'); // Returns Monday, Tuesday, etc.
+      
+      const daySchedule = businessHours.find(schedule => schedule.day === dayOfWeek);
+      
+      if (!daySchedule || !daySchedule.isOpen) {
+        setAvailableSlots([]);
+        return;
+      }
+      
+      // Generate slots based on business hours and service duration
+      const slots: TimeSlot[] = [];
+      const openTime = daySchedule.openTime;
+      const closeTime = daySchedule.closeTime;
+      const serviceDurationMinutes = selectedService.duration;
+      
+      // Parse open and close times
+      const [openHour, openMinute] = openTime.split(':').map(Number);
+      const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+      
+      // Calculate latest possible start time (close time - service duration)
+      const closeTimeMinutes = closeHour * 60 + closeMinute;
+      const latestStartMinutes = closeTimeMinutes - serviceDurationMinutes;
+      const latestStartHour = Math.floor(latestStartMinutes / 60);
+      const latestStartMinute = latestStartMinutes % 60;
+      
+      // Generate 30-minute slots
+      let currentHour = openHour;
+      let currentMinute = openMinute;
+      
+      while (currentHour < latestStartHour || (currentHour === latestStartHour && currentMinute <= latestStartMinute)) {
+        const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+        
+        slots.push({
+          time: timeString,
+          available: true
+        });
+        
+        // Add 30 minutes
+        currentMinute += 30;
+        if (currentMinute >= 60) {
+          currentMinute = 0;
+          currentHour += 1;
         }
-      ]);
-    }
-  };
-
-  const generateAvailableDates = () => {
-    const dates: Date[] = [];
-    const today = startOfDay(new Date());
-    
-    // Generate next 30 days (excluding Sundays for example)
-    for (let i = 1; i <= 30; i++) {
-      const date = addDays(today, i);
-      if (date.getDay() !== 0) { // Exclude Sundays
-        dates.push(date);
       }
+      
+      setAvailableSlots(slots);
+    } catch (error) {
+      console.error('Error generating time slots:', error);
+      setAvailableSlots([]);
     }
-    
-    setAvailableDates(dates);
-  };
+  }, [selectedDate, selectedService, businessHours]);
 
-  const generateTimeSlots = () => {
-    const slots = [];
-    const startHour = 9; // 9 AM
-    const endHour = 17; // 5 PM
-    
-    for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        slots.push({ time, available: true });
-      }
+  // Auto-generate time slots when dependencies change (but not when called directly from handleDateSelect)
+  useEffect(() => {
+    if (selectedDate && selectedService && businessHours.length > 0) {
+      void generateTimeSlots();
     }
-    
-    setAvailableSlots(slots);
-  };
+  }, [selectedService, businessHours]); // Exclude selectedDate to avoid double calls
 
-  const handleServiceSelect = (service: Service) => {
+  // Event handlers
+  const handleServiceSelect = useCallback((service: Service) => {
     setSelectedService(service);
     setCurrentStep('datetime');
-  };
+  }, []);
 
-  const handleDateSelect = (date: Date) => {
+  const handleDateSelect = useCallback((date: Date) => {
     setSelectedDate(date);
-  };
+    // Generate time slots immediately with the new date
+    void generateTimeSlots(date);
+  }, [generateTimeSlots]);
 
-  const handleTimeSelect = (time: string) => {
-    setSelectedTime(time);
-    setCurrentStep('details');
-  };
+  const handleBookingComplete = useCallback(() => {
+    setBookingSuccess(true);
+    setCurrentStep('confirmation');
+  }, []);
 
-  const handleBookingSubmit = async (formData: any) => {
-    setIsLoading(true);
-    try {
-      // Create appointment record
-      const appointmentData = {
-        customerName: formData.customerName,
-        customerEmail: formData.customerEmail,
-        customerPhone: formData.customerPhone,
-        serviceId: selectedService?.id,
-        serviceName: selectedService?.name,
-        servicePrice: selectedService?.price,
-        appointmentDate: format(selectedDate!, 'yyyy-MM-dd'),
-        startTime: selectedTime,
-        endTime: format(new Date(`2000-01-01T${selectedTime}:00`).getTime() + (selectedService?.duration || 60) * 60000, 'HH:mm'),
-        status: 'pending',
-        paymentStatus: 'pending',
-        notes: formData.notes,
-      };
-
-      const data = await apiClient.createAppointment(appointmentData);
-
-      // For demo purposes, we'll skip payment and mark as successful
-      setBookingSuccess(true);
-      setCurrentStep('confirmation');
-    } catch (error) {
-      console.error('Error creating appointment:', error);
-      alert('There was an error creating your appointment. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetBooking = () => {
+  const resetBooking = useCallback(() => {
     setCurrentStep('service');
     setSelectedService(null);
     setSelectedDate(null);
     setSelectedTime(null);
     setBookingSuccess(false);
-  };
+  }, []);
 
-  const steps = [
-    { id: 'service', name: 'Choose Service', completed: currentStep !== 'service' },
-    { id: 'datetime', name: 'Select Date & Time', completed: currentStep === 'details' || currentStep === 'confirmation' },
-    { id: 'details', name: 'Your Details', completed: currentStep === 'confirmation' },
-    { id: 'confirmation', name: 'Confirmation', completed: false },
-  ];
+  // Load services and business hours on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load services
+        const servicesData = await apiClient.getServices();
+        setServices(servicesData);
+        
+        // Load business hours
+        const businessHoursData = await apiClient.getBusinessHours();
+        setBusinessHours(businessHoursData);
+
+        // Load closure dates
+        const closureDatesData = await apiClient.getClosureDates();
+        const closureDatesStrings = closureDatesData.map(closure => closure.date);
+        setClosureDates(closureDatesStrings);
+      } catch (err) {
+        console.error('Error loading data:', err);
+      }
+    };
+
+    void loadData();
+  }, []);
+
+  // Generate available dates (next 30 days, excluding closed days and closure dates)
+  useEffect(() => {
+    if (businessHours.length === 0) return;
+    
+    const dates: Date[] = [];
+    const today = startOfDay(new Date());
+    let openDaysCount = 0;
+    
+    for (let i = 1; i <= 30; i++) { // Generate next 30 days
+      const date = addDays(today, i);
+      const dayOfWeek = format(date, 'EEEE'); // Monday, Tuesday, etc.
+      const dateString = format(date, 'yyyy-MM-dd');
+      
+      // Check if date is a closure date
+      if (closureDates.includes(dateString)) {
+        continue; // Skip closure dates
+      }
+      
+      const daySchedule = businessHours.find(schedule => schedule.day === dayOfWeek);
+      
+      // Only include dates where the business is open
+      if (daySchedule && daySchedule.isOpen) {
+        dates.push(date);
+        openDaysCount++;
+      }
+    }
+    
+    setAvailableDates(dates);
+  }, [businessHours, closureDates]);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Book Your Appointment
-          </h1>
-          <p className="text-xl text-gray-600">
-            Experience premium nail care at CSX Nail Lounge
-          </p>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Book Your Appointment</h1>
+          <p className="text-gray-600">Choose your service and preferred time</p>
         </div>
 
         {/* Progress Steps */}
-        <div className="mb-12">
-          <div className="flex items-center justify-center">
-            {steps.map((step, index) => (
-              <React.Fragment key={step.id}>
-                <div className="flex items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      step.completed || currentStep === step.id
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-500'
-                    }`}
-                  >
-                    {step.completed ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      index + 1
-                    )}
-                  </div>
-                  <span className="ml-2 text-sm font-medium text-gray-700">
-                    {step.name}
-                  </span>
+        <div className="flex justify-center mb-8">
+          <div className="flex items-center space-x-4">
+            {['service', 'datetime', 'details', 'confirmation'].map((step, index) => (
+              <div key={step} className="flex items-center">
+                <div className={`
+                  w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                  ${currentStep === step 
+                    ? 'bg-blue-600 text-white' 
+                    : index < ['service', 'datetime', 'details', 'confirmation'].indexOf(currentStep)
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-200 text-gray-600'
+                  }
+                `}>
+                  {index + 1}
                 </div>
-                {index < steps.length - 1 && (
-                  <div className="w-12 h-0.5 bg-gray-200 mx-4" />
+                {index < 3 && (
+                  <div className={`
+                    w-12 h-0.5 mx-2
+                    ${index < ['service', 'datetime', 'details', 'confirmation'].indexOf(currentStep)
+                      ? 'bg-green-600'
+                      : 'bg-gray-200'
+                    }
+                  `} />
                 )}
-              </React.Fragment>
+              </div>
             ))}
           </div>
         </div>
 
         {/* Content */}
-        <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-6">
           {currentStep === 'service' && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
-                Choose Your Service
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {services.map(service => (
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Select a Service</h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {services.map((service) => (
                   <ServiceCard
-                    key={service.id}
+                    key={service._id || service.id}
                     service={service}
-                    isSelected={selectedService?.id === service.id}
                     onSelect={handleServiceSelect}
+                    isSelected={selectedService?._id === service._id || selectedService?.id === service.id}
                   />
                 ))}
               </div>
             </div>
           )}
 
-          {currentStep === 'datetime' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
-                Select Date & Time
-              </h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {currentStep === 'datetime' && selectedService && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                  Select Date & Time for {selectedService.name}
+                </h2>
+                
                 <Calendar
                   selectedDate={selectedDate}
-                  onDateSelect={handleDateSelect}
                   availableDates={availableDates}
+                  onDateSelect={handleDateSelect}
                 />
-                {selectedDate && (
-                  <TimeSlotPicker
-                    selectedDate={selectedDate}
-                    selectedTime={selectedTime}
-                    onTimeSelect={handleTimeSelect}
-                    availableSlots={availableSlots}
-                  />
-                )}
               </div>
-            </div>
-          )}
 
-          {currentStep === 'details' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
-                Complete Your Booking
-              </h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <BookingForm
-                  onSubmit={handleBookingSubmit}
-                  isLoading={isLoading}
+              {selectedDate && availableSlots.length > 0 && (
+                <TimeSlotPicker
+                  selectedDate={selectedDate}
+                  availableSlots={availableSlots}
+                  selectedTime={selectedTime}
+                  onTimeSelect={setSelectedTime}
                 />
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Booking Summary
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Service:</span>
-                      <span className="font-medium">{selectedService?.name}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Date:</span>
-                      <span className="font-medium">
-                        {selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Time:</span>
-                      <span className="font-medium">{selectedTime}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Duration:</span>
-                      <span className="font-medium">{selectedService?.duration} minutes</span>
-                    </div>
-                    <div className="border-t pt-4">
-                      <div className="flex items-center justify-between text-lg font-semibold">
-                        <span>Total:</span>
-                        <span className="text-green-600">${selectedService?.price}</span>
-                      </div>
-                    </div>
-                  </div>
+              )}
+
+              {selectedTime && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setCurrentStep('details')}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    Continue
+                  </button>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
-          {currentStep === 'confirmation' && (
-            <div className="text-center">
-              <div className="bg-white rounded-lg shadow p-8 max-w-md mx-auto">
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                  Booking Confirmed!
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  Your appointment has been successfully booked. You'll receive a confirmation email shortly.
-                </p>
-                <button
-                  onClick={resetBooking}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Book Another Appointment
-                </button>
-              </div>
+          {currentStep === 'details' && selectedService && selectedDate && selectedTime && (
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Your Information</h2>
+              <BookingForm
+                selectedService={selectedService}
+                selectedDate={selectedDate}
+                selectedTime={selectedTime}
+                onComplete={handleBookingComplete}
+                isLoading={isLoading}
+              />
+            </div>
+          )}
+
+          {currentStep === 'confirmation' && bookingSuccess && (
+            <div className="text-center py-8">
+              <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Booking Confirmed!</h2>
+              <p className="text-gray-600 mb-6">
+                Your appointment has been successfully booked. You will receive a confirmation email shortly.
+              </p>
+              <button
+                onClick={resetBooking}
+                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Book Another Appointment
+              </button>
             </div>
           )}
         </div>
