@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "concurrently \"vite\" \"npm run server\"",
     "server": "tsx watch server.ts",
+    "start": "tsx server.ts",
     "build": "vite build",
     "build:vercel": "npm run build",
     "lint": "eslint .",

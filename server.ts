@@ -14,7 +14,9 @@ const PORT = process.env.PORT || 3000;
 
 // Enable CORS and JSON parsing
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:5178'], // Allow multiple dev ports
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://csxnaillounge.co.uk', 'https://www.csxnaillounge.co.uk'] // Your custom domain
+    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:5178'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
