@@ -15,8 +15,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isSelected, onSelect
       onClick={() => onSelect(service)}
       className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg ${
         isSelected
-          ? 'border-blue-500 bg-blue-50 shadow-md'
-          : 'border-gray-200 bg-pink-200 hover:border-blue-300'
+          ? 'border-purple-500 bg-purple-100 shadow-md'
+          : 'border-purple-300 bg-purple-50 hover:border-purple-500'
       }`}
     >
       <div className="flex justify-between items-start mb-3">
