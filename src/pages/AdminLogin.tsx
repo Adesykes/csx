@@ -50,7 +50,7 @@ const AdminLogin: React.FC = () => {
             Admin Login
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Access the CSX Nail Lounge admin dashboard
+            Access the CXS Nail Lounge admin dashboard
           </p>
         </div>
         

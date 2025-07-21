@@ -60,10 +60,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               }}
             >
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">CSX</span>
+                <span className="text-white font-bold text-lg">CXS</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">CSX Nail Lounge</h1>
+                <h1 className="text-xl font-bold text-gray-900">CXS Nail Lounge</h1>
                 <p className="text-xs text-gray-500">Premium Nail Care</p>
               </div>
             </Link>
@@ -248,7 +248,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <footer className="bg-white border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600">
-            <p>&copy; 2025 CSX Nail Lounge. All rights reserved.</p>
+            <p>&copy; 2025 CXS Nail Lounge. All rights reserved.</p>
             <p className="mt-2 text-sm">Premium nail care services with online booking</p>
           </div>
         </div>
