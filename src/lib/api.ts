@@ -96,7 +96,7 @@ class ApiClient {
 
   // Auth methods
   async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/auth/login', {
+    const response = await this.request<AuthResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -118,32 +118,32 @@ class ApiClient {
 
   // Services methods
   async getServices() {
-    return this.request<Service[]>('/services');
+    return this.request<Service[]>('/api/services');
   }
 
   async createService(serviceData: Omit<Service, '_id'>) {
-    return this.request<Service>('/services', {
+    return this.request<Service>('/api/services', {
       method: 'POST',
       body: JSON.stringify(serviceData),
     });
   }
 
   async updateService(serviceId: string, serviceData: Partial<Omit<Service, '_id'>>) {
-    return this.request<Service>(`/services/${serviceId}`, {
+    return this.request<Service>(`/api/services/${serviceId}`, {
       method: 'PUT',
       body: JSON.stringify(serviceData),
     });
   }
 
   async deleteService(serviceId: string) {
-    return this.request<void>(`/services/${serviceId}`, {
+    return this.request<void>(`/api/services/${serviceId}`, {
       method: 'DELETE',
     });
   }
 
   // Appointments methods
   async getAppointments() {
-    return this.request<Appointment[]>('/appointments');
+    return this.request<Appointment[]>('/api/appointments');
   }
 
   // Public method for checking availability (no auth required)
@@ -153,49 +153,49 @@ class ApiClient {
       time: string;
       service: string;
       duration?: number;
-    }>>('/appointments/availability');
+    }>>('/api/appointments/availability');
   }
 
   async createAppointment(appointmentData: Omit<Appointment, '_id'>) {
-    return this.request<Appointment>('/appointments', {
+    return this.request<Appointment>('/api/appointments', {
       method: 'POST',
       body: JSON.stringify(appointmentData),
     });
   }
 
   async updateAppointment(appointmentId: string, status: Appointment['status']) {
-    return this.request<Appointment>(`/appointments/${appointmentId}`, {
+    return this.request<Appointment>(`/api/appointments/${appointmentId}`, {
       method: 'PUT',
       body: JSON.stringify({ status }),
     });
   }
 
   async markPaymentReceived(appointmentId: string, paymentStatus: 'paid' | 'pending' | 'refunded') {
-    return this.request<{ message: string }>(`/appointments/${appointmentId}/payment`, {
+    return this.request<{ message: string }>(`/api/appointments/${appointmentId}/payment`, {
       method: 'PATCH',
       body: JSON.stringify({ paymentStatus }),
     });
   }
 
   async findAppointmentsByCustomer(customerEmail: string, customerPhone: string) {
-    return this.request<Appointment[]>(`/appointments/customer?email=${encodeURIComponent(customerEmail)}&phone=${encodeURIComponent(customerPhone)}`);
+    return this.request<Appointment[]>(`/api/appointments/customer?email=${encodeURIComponent(customerEmail)}&phone=${encodeURIComponent(customerPhone)}`);
   }
 
   async cancelAppointment(appointmentId: string) {
-    return this.request<{ message: string }>(`/appointments/${appointmentId}/cancel`, {
+    return this.request<{ message: string }>(`/api/appointments/${appointmentId}/cancel`, {
       method: 'PATCH',
     });
   }
 
   async deleteAppointment(appointmentId: string) {
-    return this.request<{ message: string }>(`/appointments/${appointmentId}`, {
+    return this.request<{ message: string }>(`/api/appointments/${appointmentId}`, {
       method: 'DELETE',
     });
   }
 
   // Payment methods
   async createPaymentIntent(amount: number, appointmentId: string) {
-    return this.request<{ clientSecret: string }>('/create-payment-intent', {
+    return this.request<{ clientSecret: string }>('/api/create-payment-intent', {
       method: 'POST',
       body: JSON.stringify({ amount, appointmentId }),
     });
@@ -203,19 +203,19 @@ class ApiClient {
 
   // Revenue methods
   async getRevenue(startDate: string, endDate: string) {
-    return this.request<Revenue[]>(`/revenue?startDate=${startDate}&endDate=${endDate}`);
+    return this.request<Revenue[]>(`/api/revenue?startDate=${startDate}&endDate=${endDate}`);
   }
 
   // Business Hours methods
   async getBusinessHours() {
-    return this.request<DaySchedule[]>('/business-hours');
+    return this.request<DaySchedule[]>('/api/business-hours');
   }
 
   async updateBusinessHours(schedule: DaySchedule[]) {
     if (!this.token) {
       throw new Error('Authentication required');
     }
-    return this.request<{ message: string }>('/business-hours', {
+    return this.request<{ message: string }>('/api/business-hours', {
       method: 'PUT',
       body: JSON.stringify({ schedule })
     });
@@ -228,7 +228,7 @@ class ApiClient {
       date: string;
       reason: string;
       createdAt: string;
-    }>>('/closure-dates');
+    }>>('/api/closure-dates');
   }
 
   async addClosureDate(closure: { date: string; reason: string }) {
@@ -240,7 +240,7 @@ class ApiClient {
       date: string;
       reason: string;
       createdAt: string;
-    }>('/closure-dates', {
+    }>('/api/closure-dates', {
       method: 'POST',
       body: JSON.stringify(closure)
     });
@@ -250,7 +250,7 @@ class ApiClient {
     if (!this.token) {
       throw new Error('Authentication required');
     }
-    return this.request<{ message: string }>(`/closure-dates/${id}`, {
+    return this.request<{ message: string }>(`/api/closure-dates/${id}`, {
       method: 'DELETE'
     });
   }
