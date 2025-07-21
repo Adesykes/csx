@@ -9,13 +9,14 @@ interface ServiceCardProps {
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({ service, isSelected, onSelect }) => {
+  // Updated to use darker pink background for unselected cards
   return (
     <div
       onClick={() => onSelect(service)}
       className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg ${
         isSelected
           ? 'border-blue-500 bg-blue-50 shadow-md'
-          : 'border-gray-200 bg-white hover:border-blue-300'
+          : 'border-gray-200 bg-pink-200 hover:border-blue-300'
       }`}
     >
       <div className="flex justify-between items-start mb-3">

@@ -148,6 +148,16 @@ class ApiClient {
     return this.request<Appointment[]>('/appointments');
   }
 
+  // Public method for checking availability (no auth required)
+  async getAppointmentAvailability() {
+    return this.request<Array<{
+      date: string;
+      time: string;
+      service: string;
+      duration?: number;
+    }>>('/appointments/availability');
+  }
+
   async createAppointment(appointmentData: Omit<Appointment, '_id'>) {
     return this.request<Appointment>('/appointments', {
       method: 'POST',

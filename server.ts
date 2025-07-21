@@ -395,6 +395,8 @@ const normalizePhoneNumber = (phone: string): string => {
 
 app.post('/api/appointments', async (req, res) => {
   try {
+    console.log('Creating appointment with data:', req.body);
+    
     const db = await getDatabase();
     const appointmentsCollection = db.collection('appointments');
     
@@ -408,10 +410,40 @@ app.post('/api/appointments', async (req, res) => {
       updatedAt: new Date()
     };
     
+    console.log('Processed appointment data:', newAppointment);
+    
     const result = await appointmentsCollection.insertOne(newAppointment);
+    console.log('Appointment created successfully with ID:', result.insertedId);
+    
     res.status(201).json({ id: result.insertedId, ...newAppointment });
   } catch (error) {
     console.error('Error creating appointment:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Public endpoint for checking appointment availability (no auth required)
+app.get('/api/appointments/availability', async (req, res) => {
+  try {
+    const db = await getDatabase();
+    const appointments = await db.collection('appointments')
+      .find({ 
+        status: { $in: ['pending', 'confirmed'] } // Only get active appointments
+      })
+      .sort({ date: 1, time: 1 })
+      .toArray();
+    
+    // Return only the fields needed for availability checking
+    const availability = appointments.map(apt => ({
+      date: apt.date,
+      time: apt.time,
+      service: apt.service,
+      duration: apt.serviceDuration || apt.duration // Include duration from appointment data
+    }));
+    
+    res.json(availability);
+  } catch (error) {
+    console.error('Error fetching appointment availability:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

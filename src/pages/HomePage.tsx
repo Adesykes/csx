@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { addDays, startOfDay, format } from 'date-fns';
 import { apiClient } from '../lib/api';
 import { Service } from '../types';
@@ -7,7 +8,7 @@ import ServiceCard from '../components/ServiceCard';
 import Calendar from '../components/Calendar';
 import TimeSlotPicker from '../components/TimeSlotPicker';
 import BookingForm from '../components/BookingForm';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, ChevronLeft } from 'lucide-react';
 
 interface DaySchedule {
   day: string;
@@ -19,6 +20,8 @@ interface DaySchedule {
 type BookingStep = 'service' | 'datetime' | 'details' | 'confirmation';
 
 const HomePage = (): JSX.Element => {
+  const location = useLocation();
+  
   // State management
   const [currentStep, setCurrentStep] = useState<BookingStep>('service');
   const [services, setServices] = useState<Service[]>([]);
@@ -37,6 +40,8 @@ const HomePage = (): JSX.Element => {
   // Generate time slots based on business hours
   const generateTimeSlots = useCallback(async (dateToUse?: Date) => {
     const targetDate = dateToUse || selectedDate;
+    console.log('generateTimeSlots called with:', { targetDate, selectedService: selectedService?.name, businessHoursLength: businessHours.length });
+    
     if (!targetDate || !selectedService?.duration || businessHours.length === 0) return;
     
     try {
@@ -50,32 +55,99 @@ const HomePage = (): JSX.Element => {
         return;
       }
       
-      // Generate slots based on business hours and service duration
+      // Get existing appointments for the target date
+      let dayAppointments: any[] = [];
+      try {
+        const existingAppointments = await apiClient.getAppointmentAvailability();
+        console.log('All appointments from API:', existingAppointments);
+        
+        // Log each appointment's date to see the exact format
+        existingAppointments.forEach((apt, index) => {
+          console.log(`Appointment ${index}:`, { date: apt.date, time: apt.time, service: apt.service });
+        });
+        
+        const targetDateString = format(targetDate, 'yyyy-MM-dd');
+        console.log('Target date string:', targetDateString);
+        
+        dayAppointments = existingAppointments.filter(apt => {
+          console.log(`Comparing: "${apt.date}" === "${targetDateString}" = ${apt.date === targetDateString}`);
+          return apt.date === targetDateString;
+        });
+        console.log('Filtered appointments for target date:', dayAppointments);
+      } catch (error) {
+        console.error('Error fetching appointment availability:', error);
+        // Continue with empty appointments array if API fails
+      }
+      
+      // Generate slots based on business hours
       const slots: TimeSlot[] = [];
       const openTime = daySchedule.openTime;
       const closeTime = daySchedule.closeTime;
-      const serviceDurationMinutes = selectedService.duration;
       
       // Parse open and close times
       const [openHour, openMinute] = openTime.split(':').map(Number);
       const [closeHour, closeMinute] = closeTime.split(':').map(Number);
       
-      // Calculate latest possible start time (close time - service duration)
-      const closeTimeMinutes = closeHour * 60 + closeMinute;
-      const latestStartMinutes = closeTimeMinutes - serviceDurationMinutes;
-      const latestStartHour = Math.floor(latestStartMinutes / 60);
-      const latestStartMinute = latestStartMinutes % 60;
-      
-      // Generate 30-minute slots
+      // Generate 30-minute slots up to and including the closing time
       let currentHour = openHour;
       let currentMinute = openMinute;
       
-      while (currentHour < latestStartHour || (currentHour === latestStartHour && currentMinute <= latestStartMinute)) {
+      while (currentHour < closeHour || (currentHour === closeHour && currentMinute <= closeMinute)) {
         const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+        
+        // Check if this time slot conflicts with any existing appointment
+        let isAvailable = true;
+        
+        if (dayAppointments.length > 0) {
+          console.log(`Checking conflicts for ${timeString} on ${format(targetDate, 'yyyy-MM-dd')}:`, dayAppointments);
+          
+          isAvailable = !dayAppointments.some(appointment => {
+            const appointmentTime = appointment.time;
+            const appointmentTimeMinutes = timeToMinutes(appointmentTime);
+            const currentTimeMinutes = currentHour * 60 + currentMinute;
+            
+            console.log(`Checking slot ${timeString} (${currentTimeMinutes}min) against appointment ${appointmentTime} (${appointmentTimeMinutes}min)`);
+            
+            // Get the duration of the existing appointment
+            const appointmentDuration = appointment.duration || 
+              (services.find(s => 
+                s.name === appointment.service || 
+                s._id === appointment.service || 
+                s.id === appointment.service
+              )?.duration) || 60; // Default to 60 minutes if duration not found
+            
+            console.log(`Appointment duration: ${appointmentDuration}min, Selected service duration: ${selectedService.duration}min`);
+            
+            // Check if the current slot would conflict with the existing appointment
+            // Conflict occurs if:
+            // 1. Current slot starts during an existing appointment
+            // 2. Current slot would still be running when existing appointment starts
+            const currentSlotEnd = currentTimeMinutes + selectedService.duration;
+            const appointmentEnd = appointmentTimeMinutes + appointmentDuration;
+            
+            console.log(`Current slot: ${currentTimeMinutes}min - ${currentSlotEnd}min`);
+            console.log(`Existing appointment: ${appointmentTimeMinutes}min - ${appointmentEnd}min`);
+            
+            const conflict = (
+              (currentTimeMinutes >= appointmentTimeMinutes && currentTimeMinutes < appointmentEnd) ||
+              (currentSlotEnd > appointmentTimeMinutes && currentTimeMinutes < appointmentTimeMinutes)
+            );
+            
+            console.log(`Conflict result: ${conflict}`);
+            
+            if (conflict) {
+              console.log(`Conflict detected: ${timeString} conflicts with appointment at ${appointmentTime} (${appointment.service}, ${appointmentDuration}min)`);
+            }
+            
+            return conflict;
+          });
+        } else {
+          console.log(`No appointments found for ${format(targetDate, 'yyyy-MM-dd')}, all slots available`);
+        }
         
         slots.push({
           time: timeString,
-          available: true
+          available: isAvailable
         });
         
         // Add 30 minutes
@@ -91,14 +163,22 @@ const HomePage = (): JSX.Element => {
       console.error('Error generating time slots:', error);
       setAvailableSlots([]);
     }
-  }, [selectedDate, selectedService, businessHours]);
+  }, [selectedDate, selectedService, businessHours, services]);
+
+  // Helper function to convert time string to minutes
+  const timeToMinutes = (timeString: string): number => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const result = hours * 60 + minutes;
+    console.log(`timeToMinutes: ${timeString} = ${result} minutes`);
+    return result;
+  };
 
   // Auto-generate time slots when dependencies change (but not when called directly from handleDateSelect)
   useEffect(() => {
     if (selectedDate && selectedService && businessHours.length > 0) {
       void generateTimeSlots();
     }
-  }, [selectedService, businessHours]); // Exclude selectedDate to avoid double calls
+  }, [selectedService, businessHours, services, generateTimeSlots]); // Include services so it refreshes when services are loaded
 
   // Event handlers
   const handleServiceSelect = useCallback((service: Service) => {
@@ -115,7 +195,12 @@ const HomePage = (): JSX.Element => {
   const handleBookingComplete = useCallback(() => {
     setBookingSuccess(true);
     setCurrentStep('confirmation');
-  }, []);
+    
+    // Refresh time slots to reflect the newly booked appointment
+    if (selectedDate && selectedService && businessHours.length > 0) {
+      void generateTimeSlots(selectedDate);
+    }
+  }, [selectedDate, selectedService, businessHours, generateTimeSlots]);
 
   const resetBooking = useCallback(() => {
     setCurrentStep('service');
@@ -123,6 +208,7 @@ const HomePage = (): JSX.Element => {
     setSelectedDate(null);
     setSelectedTime(null);
     setBookingSuccess(false);
+    setAvailableSlots([]); // Clear available slots when resetting
   }, []);
 
   // Load services and business hours on mount
@@ -149,6 +235,15 @@ const HomePage = (): JSX.Element => {
     void loadData();
   }, []);
 
+  // Reset booking flow when navigating to homepage (ensures fresh start when clicking "Book Appointment")
+  useEffect(() => {
+    setCurrentStep('service');
+    setSelectedService(null);
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setBookingSuccess(false);
+  }, [location.pathname]); // Reset whenever the path changes to homepage
+
   // Generate available dates (next 30 days, excluding closed days and closure dates)
   useEffect(() => {
     if (businessHours.length === 0) return;
@@ -157,7 +252,7 @@ const HomePage = (): JSX.Element => {
     const today = startOfDay(new Date());
     let openDaysCount = 0;
     
-    for (let i = 1; i <= 30; i++) { // Generate next 30 days
+    for (let i = 0; i <= 30; i++) { // Include today (i=0) and next 30 days
       const date = addDays(today, i);
       const dayOfWeek = format(date, 'EEEE'); // Monday, Tuesday, etc.
       const dateString = format(date, 'yyyy-MM-dd');
@@ -180,7 +275,7 @@ const HomePage = (): JSX.Element => {
   }, [businessHours, closureDates]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-amber-50">
       <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
         <div className="text-center mb-8">
@@ -238,11 +333,27 @@ const HomePage = (): JSX.Element => {
 
           {currentStep === 'datetime' && selectedService && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              <div className="flex items-center justify-between mb-6">
+                <button
+                  onClick={() => {
+                    setCurrentStep('service');
+                    // Clear selected date and time when going back
+                    setSelectedDate(null);
+                    setSelectedTime(null);
+                    setAvailableSlots([]);
+                  }}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                  <span>Back to Services</span>
+                </button>
+                <h2 className="text-xl font-semibold text-gray-900">
                   Select Date & Time for {selectedService.name}
                 </h2>
-                
+                <div></div> {/* Spacer for centering */}
+              </div>
+              
+              <div>
                 <Calendar
                   selectedDate={selectedDate}
                   availableDates={availableDates}

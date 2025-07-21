@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { format } from 'date-fns';
 import { User, Mail, Phone, MessageCircle, CreditCard, Banknote } from 'lucide-react';
 import type { Service } from '../types';
 
@@ -41,8 +42,9 @@ const BookingForm: React.FC<BookingFormProps> = ({
         customerEmail: data.customerEmail,
         customerPhone: data.customerPhone,
         service: selectedService.name,
+        serviceDuration: selectedService.duration, // Include duration for conflict checking
         servicePrice: selectedService.price,
-        date: selectedDate.toISOString().split('T')[0], // YYYY-MM-DD format
+        date: format(selectedDate, 'yyyy-MM-dd'), // Local date format YYYY-MM-DD
         time: selectedTime,
         status: 'pending' as const,
         paymentMethod,
