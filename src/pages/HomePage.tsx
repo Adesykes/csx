@@ -78,17 +78,27 @@ const HomePage = (): JSX.Element => {
       let currentHour = openHour;
       let currentMinute = openMinute;
       
+      // Get current time for comparison (only relevant for today)
+      const now = new Date();
+      const isToday = format(targetDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
+      const currentTimeMinutes = isToday ? now.getHours() * 60 + now.getMinutes() : -1;
+      
       while (currentHour < closeHour || (currentHour === closeHour && currentMinute <= closeMinute)) {
         const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+        const slotTimeMinutes = currentHour * 60 + currentMinute;
         
         // Check if this time slot conflicts with any existing appointment
         let isAvailable = true;
         
-        if (dayAppointments.length > 0) {
+        // Skip past time slots for today
+        if (isToday && slotTimeMinutes <= currentTimeMinutes) {
+          isAvailable = false;
+        }
+        
+        if (dayAppointments.length > 0 && isAvailable) {
           isAvailable = !dayAppointments.some(appointment => {
             const appointmentTime = appointment.time;
             const appointmentTimeMinutes = timeToMinutes(appointmentTime);
-            const currentTimeMinutes = currentHour * 60 + currentMinute;
             
             // Get the duration of the existing appointment
             const appointmentDuration = appointment.duration || 
@@ -99,12 +109,12 @@ const HomePage = (): JSX.Element => {
               )?.duration) || 60; // Default to 60 minutes if duration not found
             
             // Check if the current slot would conflict with the existing appointment
-            const currentSlotEnd = currentTimeMinutes + selectedService.duration;
+            const currentSlotEnd = slotTimeMinutes + selectedService.duration;
             const appointmentEnd = appointmentTimeMinutes + appointmentDuration;
             
             return (
-              (currentTimeMinutes >= appointmentTimeMinutes && currentTimeMinutes < appointmentEnd) ||
-              (currentSlotEnd > appointmentTimeMinutes && currentTimeMinutes < appointmentTimeMinutes)
+              (slotTimeMinutes >= appointmentTimeMinutes && slotTimeMinutes < appointmentEnd) ||
+              (currentSlotEnd > appointmentTimeMinutes && slotTimeMinutes < appointmentTimeMinutes)
             );
           });
         }
