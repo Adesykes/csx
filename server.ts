@@ -395,8 +395,6 @@ const normalizePhoneNumber = (phone: string): string => {
 
 app.post('/api/appointments', async (req, res) => {
   try {
-    console.log('Creating appointment with data:', req.body);
-    
     const db = await getDatabase();
     const appointmentsCollection = db.collection('appointments');
     
@@ -410,11 +408,7 @@ app.post('/api/appointments', async (req, res) => {
       updatedAt: new Date()
     };
     
-    console.log('Processed appointment data:', newAppointment);
-    
     const result = await appointmentsCollection.insertOne(newAppointment);
-    console.log('Appointment created successfully with ID:', result.insertedId);
-    
     res.status(201).json({ id: result.insertedId, ...newAppointment });
   } catch (error) {
     console.error('Error creating appointment:', error);

@@ -40,7 +40,6 @@ const HomePage = (): JSX.Element => {
   // Generate time slots based on business hours
   const generateTimeSlots = useCallback(async (dateToUse?: Date) => {
     const targetDate = dateToUse || selectedDate;
-    console.log('generateTimeSlots called with:', { targetDate, selectedService: selectedService?.name, businessHoursLength: businessHours.length });
     
     if (!targetDate || !selectedService?.duration || businessHours.length === 0) return;
     
@@ -59,21 +58,8 @@ const HomePage = (): JSX.Element => {
       let dayAppointments: any[] = [];
       try {
         const existingAppointments = await apiClient.getAppointmentAvailability();
-        console.log('All appointments from API:', existingAppointments);
-        
-        // Log each appointment's date to see the exact format
-        existingAppointments.forEach((apt, index) => {
-          console.log(`Appointment ${index}:`, { date: apt.date, time: apt.time, service: apt.service });
-        });
-        
         const targetDateString = format(targetDate, 'yyyy-MM-dd');
-        console.log('Target date string:', targetDateString);
-        
-        dayAppointments = existingAppointments.filter(apt => {
-          console.log(`Comparing: "${apt.date}" === "${targetDateString}" = ${apt.date === targetDateString}`);
-          return apt.date === targetDateString;
-        });
-        console.log('Filtered appointments for target date:', dayAppointments);
+        dayAppointments = existingAppointments.filter(apt => apt.date === targetDateString);
       } catch (error) {
         console.error('Error fetching appointment availability:', error);
         // Continue with empty appointments array if API fails
@@ -99,14 +85,10 @@ const HomePage = (): JSX.Element => {
         let isAvailable = true;
         
         if (dayAppointments.length > 0) {
-          console.log(`Checking conflicts for ${timeString} on ${format(targetDate, 'yyyy-MM-dd')}:`, dayAppointments);
-          
           isAvailable = !dayAppointments.some(appointment => {
             const appointmentTime = appointment.time;
             const appointmentTimeMinutes = timeToMinutes(appointmentTime);
             const currentTimeMinutes = currentHour * 60 + currentMinute;
-            
-            console.log(`Checking slot ${timeString} (${currentTimeMinutes}min) against appointment ${appointmentTime} (${appointmentTimeMinutes}min)`);
             
             // Get the duration of the existing appointment
             const appointmentDuration = appointment.duration || 
@@ -116,33 +98,15 @@ const HomePage = (): JSX.Element => {
                 s.id === appointment.service
               )?.duration) || 60; // Default to 60 minutes if duration not found
             
-            console.log(`Appointment duration: ${appointmentDuration}min, Selected service duration: ${selectedService.duration}min`);
-            
             // Check if the current slot would conflict with the existing appointment
-            // Conflict occurs if:
-            // 1. Current slot starts during an existing appointment
-            // 2. Current slot would still be running when existing appointment starts
             const currentSlotEnd = currentTimeMinutes + selectedService.duration;
             const appointmentEnd = appointmentTimeMinutes + appointmentDuration;
             
-            console.log(`Current slot: ${currentTimeMinutes}min - ${currentSlotEnd}min`);
-            console.log(`Existing appointment: ${appointmentTimeMinutes}min - ${appointmentEnd}min`);
-            
-            const conflict = (
+            return (
               (currentTimeMinutes >= appointmentTimeMinutes && currentTimeMinutes < appointmentEnd) ||
               (currentSlotEnd > appointmentTimeMinutes && currentTimeMinutes < appointmentTimeMinutes)
             );
-            
-            console.log(`Conflict result: ${conflict}`);
-            
-            if (conflict) {
-              console.log(`Conflict detected: ${timeString} conflicts with appointment at ${appointmentTime} (${appointment.service}, ${appointmentDuration}min)`);
-            }
-            
-            return conflict;
           });
-        } else {
-          console.log(`No appointments found for ${format(targetDate, 'yyyy-MM-dd')}, all slots available`);
         }
         
         slots.push({
@@ -168,9 +132,7 @@ const HomePage = (): JSX.Element => {
   // Helper function to convert time string to minutes
   const timeToMinutes = (timeString: string): number => {
     const [hours, minutes] = timeString.split(':').map(Number);
-    const result = hours * 60 + minutes;
-    console.log(`timeToMinutes: ${timeString} = ${result} minutes`);
-    return result;
+    return hours * 60 + minutes;
   };
 
   // Auto-generate time slots when dependencies change (but not when called directly from handleDateSelect)
