@@ -238,7 +238,9 @@ const CancelAppointment: React.FC = () => {
                           {appointment.status}
                         </span>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {appointment.paymentMethod === 'cash' ? 'Pay in store' : 'Paid online'}
+                          {appointment.paymentMethod === 'cash' ? 'Pay cash on day' : 
+                           appointment.paymentMethod === 'bank_transfer' ? 'Bank transfer after appointment' : 
+                           'Other payment method'}
                         </span>
                       </div>
 

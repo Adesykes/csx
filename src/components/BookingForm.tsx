@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
-import { User, Mail, Phone, MessageCircle, CreditCard, Banknote } from 'lucide-react';
+import { User, Mail, Phone, MessageCircle, Banknote, Building2 } from 'lucide-react';
 import type { Service } from '../types';
 
 interface BookingFormData {
@@ -11,7 +11,7 @@ interface BookingFormData {
   notes: string;
 }
 
-type PaymentMethod = 'online' | 'cash';
+type PaymentMethod = 'cash' | 'bank_transfer';
 
 interface BookingFormProps {
   selectedService: Service;
@@ -29,7 +29,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
   isLoading = false
 }) => {
   const { register, handleSubmit, formState: { errors } } = useForm<BookingFormData>();
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('online');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   
@@ -162,24 +162,6 @@ const BookingForm: React.FC<BookingFormProps> = ({
           <div className="space-y-3">
             <div className="flex items-center">
               <input
-                id="payment-online"
-                name="paymentMethod"
-                type="radio"
-                checked={paymentMethod === 'online'}
-                onChange={() => setPaymentMethod('online')}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-              />
-              <label htmlFor="payment-online" className="ml-3 flex items-center text-sm">
-                <CreditCard className="h-4 w-4 mr-2 text-blue-600" />
-                <div>
-                  <span className="font-medium text-gray-900">Pay Online Now</span>
-                  <p className="text-gray-500">Secure payment with credit/debit card</p>
-                </div>
-              </label>
-            </div>
-            
-            <div className="flex items-center">
-              <input
                 id="payment-cash"
                 name="paymentMethod"
                 type="radio"
@@ -190,8 +172,26 @@ const BookingForm: React.FC<BookingFormProps> = ({
               <label htmlFor="payment-cash" className="ml-3 flex items-center text-sm">
                 <Banknote className="h-4 w-4 mr-2 text-green-600" />
                 <div>
-                  <span className="font-medium text-gray-900">Pay Cash on Day</span>
-                  <p className="text-gray-500">Pay ${selectedService.price} when you arrive for your appointment</p>
+                  <span className="font-medium text-gray-900">Cash Payment</span>
+                  <p className="text-gray-500">Pay £{selectedService.price} in cash on the day of your appointment</p>
+                </div>
+              </label>
+            </div>
+            
+            <div className="flex items-center">
+              <input
+                id="payment-bank-transfer"
+                name="paymentMethod"
+                type="radio"
+                checked={paymentMethod === 'bank_transfer'}
+                onChange={() => setPaymentMethod('bank_transfer')}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+              />
+              <label htmlFor="payment-bank-transfer" className="ml-3 flex items-center text-sm">
+                <Building2 className="h-4 w-4 mr-2 text-blue-600" />
+                <div>
+                  <span className="font-medium text-gray-900">Bank Transfer After Appointment</span>
+                  <p className="text-gray-500">Pay £{selectedService.price} via bank transfer after your appointment</p>
                 </div>
               </label>
             </div>
@@ -209,7 +209,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
           disabled={submitting || isLoading}
           className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {(submitting || isLoading) ? 'Processing...' : paymentMethod === 'online' ? 'Continue to Payment' : 'Confirm Appointment'}
+          {(submitting || isLoading) ? 'Processing...' : 'Confirm Appointment'}
         </button>
       </form>
     </div>

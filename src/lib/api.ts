@@ -16,7 +16,7 @@ export interface Appointment {
   date: string;
   time: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-  paymentMethod: 'online' | 'cash';
+  paymentMethod: 'cash' | 'bank_transfer';
   notes?: string;
 }
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Check, DollarSign, CreditCard, Banknote, X, Trash2 } from 'lucide-react';
+import { Check, DollarSign, CreditCard, Banknote, X, Trash2, Building2 } from 'lucide-react';
 import { apiClient } from '../../lib/api';
 import type { Appointment } from '../../lib/api';
 
@@ -11,7 +11,7 @@ interface AppointmentData extends Appointment {
   date: string;
   time: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-  paymentMethod: 'online' | 'cash';
+  paymentMethod: 'cash' | 'bank_transfer';
   paymentStatus: 'pending' | 'paid' | 'refunded';
   servicePrice: number;
 }
@@ -140,15 +140,20 @@ const AdminAppointments: React.FC = () => {
                 <td className="py-2 px-4 border-b">${appointment.servicePrice}</td>
                 <td className="py-2 px-4 border-b">
                   <div className="flex items-center">
-                    {appointment.paymentMethod === 'online' ? (
-                      <>
-                        <CreditCard className="h-4 w-4 mr-1 text-blue-600" />
-                        <span>Online</span>
-                      </>
-                    ) : (
+                    {appointment.paymentMethod === 'cash' ? (
                       <>
                         <Banknote className="h-4 w-4 mr-1 text-green-600" />
                         <span>Cash</span>
+                      </>
+                    ) : appointment.paymentMethod === 'bank_transfer' ? (
+                      <>
+                        <Building2 className="h-4 w-4 mr-1 text-blue-600" />
+                        <span>Bank Transfer</span>
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4 mr-1 text-gray-600" />
+                        <span>Other</span>
                       </>
                     )}
                   </div>
