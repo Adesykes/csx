@@ -41,6 +41,24 @@ const authMiddleware = async (req: express.Request, res: express.Response, next:
   }
 };
 
+// Health check endpoint (no auth required)
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Ping endpoint to keep server alive
+app.get('/ping', (req, res) => {
+  res.status(200).json({ 
+    message: 'pong',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Login endpoint
 app.post('/api/auth/login', async (req, res) => {
   try {
