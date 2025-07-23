@@ -354,7 +354,7 @@ const HomePage = (): JSX.Element => {
         <div className="bg-white rounded-lg shadow-lg p-6">
           {currentStep === 'service' && (
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Select Service(s)</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Select Main Service</h2>
               
               {/* Main Services (duration > 0) */}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -384,7 +384,7 @@ const HomePage = (): JSX.Element => {
               {/* Extras Section (duration === 0) - Only show if a main service is selected */}
               {selectedServices.some(service => service.duration > 0) && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">EXTRAS</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">SELECT EXTRAS</h3>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {services
                       .filter(service => service.duration === 0)
