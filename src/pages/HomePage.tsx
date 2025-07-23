@@ -158,11 +158,19 @@ const HomePage = (): JSX.Element => {
   // Event handlers
   const handleServiceSelect = useCallback((service: Service) => {
     setSelectedServices(prev => {
-      const isAlreadySelected = prev.some(s => s._id === service._id || s.id === service.id);
+      // Use a more robust ID comparison
+      const serviceId = service._id || service.id;
+      const isAlreadySelected = prev.some(s => {
+        const existingId = s._id || s.id;
+        return existingId === serviceId;
+      });
       
       if (isAlreadySelected) {
         // Remove service if already selected
-        return prev.filter(s => s._id !== service._id && s.id !== service.id);
+        return prev.filter(s => {
+          const existingId = s._id || s.id;
+          return existingId !== serviceId;
+        });
       } else {
         // Add service to selection
         return [...prev, service];
@@ -308,7 +316,11 @@ const HomePage = (): JSX.Element => {
                     key={service._id || service.id}
                     service={service}
                     onSelect={handleServiceSelect}
-                    isSelected={selectedServices.some(s => s._id === service._id || s.id === service.id)}
+                    isSelected={selectedServices.some(s => {
+                      const selectedId = s._id || s.id;
+                      const serviceId = service._id || service.id;
+                      return selectedId === serviceId;
+                    })}
                   />
                 ))}
               </div>
