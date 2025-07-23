@@ -182,9 +182,10 @@ const HomePage = (): JSX.Element => {
         });
       } else {
         // Add service to selection and set quantity for quantity-based services
-        const isQuantityService = service.duration === 0 || 
+        const isQuantityService = (service.duration === 0 || 
           service.category?.toLowerCase() === 'nail art' || 
-          service.category?.toLowerCase() === 'nail repair';
+          service.category?.toLowerCase() === 'nail repair') &&
+          service.category?.toLowerCase() !== 'block colour';
         if (isQuantityService && serviceId) {
           setServiceQuantities(prevQuantities => {
             const newQuantities = new Map(prevQuantities);
@@ -418,9 +419,10 @@ const HomePage = (): JSX.Element => {
                       {selectedServices.map((service) => {
                         const serviceId = service._id || service.id || '';
                         const quantity = serviceQuantities.get(serviceId) || 1;
-                        const isQuantityService = service.duration === 0 || 
+                        const isQuantityService = (service.duration === 0 || 
                           service.category?.toLowerCase() === 'nail art' || 
-                          service.category?.toLowerCase() === 'nail repair';
+                          service.category?.toLowerCase() === 'nail repair') &&
+                          service.category?.toLowerCase() !== 'block colour';
                         const totalPrice = service.price * (isQuantityService ? quantity : 1);
                         
                         return (
@@ -447,9 +449,10 @@ const HomePage = (): JSX.Element => {
                             £{selectedServices.reduce((sum, s) => {
                               const serviceId = s._id || s.id || '';
                               const quantity = serviceQuantities.get(serviceId) || 1;
-                              const isQuantityService = s.duration === 0 || 
+                              const isQuantityService = (s.duration === 0 || 
                                 s.category?.toLowerCase() === 'nail art' || 
-                                s.category?.toLowerCase() === 'nail repair';
+                                s.category?.toLowerCase() === 'nail repair') &&
+                                s.category?.toLowerCase() !== 'block colour';
                               return sum + (s.price * (isQuantityService ? quantity : 1));
                             }, 0).toFixed(2)}
                           </span>
