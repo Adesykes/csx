@@ -24,8 +24,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   
   const handleCardClick = () => {
     if (isQuantityService) {
-      // For quantity services, clicking adds to selection if not selected
-      if (!isSelected) {
+      // For quantity services, clicking toggles selection
+      if (isSelected) {
+        // If already selected, deselect by setting quantity to 0
+        handleQuantityUpdate(0);
+      } else {
+        // If not selected, add to selection
         onSelect(service);
       }
     } else {
@@ -90,7 +94,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleQuantityUpdate(Math.max(0, quantity - 1));
+                  const newQty = Math.max(0, quantity - 1);
+                  handleQuantityUpdate(newQty);
                 }}
                 disabled={quantity === 0}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
