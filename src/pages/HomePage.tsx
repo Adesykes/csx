@@ -27,7 +27,7 @@ const HomePage = (): JSX.Element => {
   const [services, setServices] = useState<Service[]>([]);
   const [businessHours, setBusinessHours] = useState<DaySchedule[]>([]);
   const [closureDates, setClosureDates] = useState<string[]>([]);
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
@@ -41,9 +41,12 @@ const HomePage = (): JSX.Element => {
   const generateTimeSlots = useCallback(async (dateToUse?: Date) => {
     const targetDate = dateToUse || selectedDate;
     
-    if (!targetDate || !selectedService?.duration || businessHours.length === 0) return;
+    if (!targetDate || selectedServices.length === 0 || businessHours.length === 0) return;
     
     try {
+      // Calculate total duration for all selected services
+      const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
+      
       // Get the day of the week
       const dayOfWeek = format(targetDate, 'EEEE'); // Returns Monday, Tuesday, etc.
       
@@ -109,7 +112,7 @@ const HomePage = (): JSX.Element => {
               )?.duration) || 60; // Default to 60 minutes if duration not found
             
             // Check if the current slot would conflict with the existing appointment
-            const currentSlotEnd = slotTimeMinutes + selectedService.duration;
+            const currentSlotEnd = slotTimeMinutes + totalDuration;
             const appointmentEnd = appointmentTimeMinutes + appointmentDuration;
             
             return (
@@ -137,7 +140,7 @@ const HomePage = (): JSX.Element => {
       console.error('Error generating time slots:', error);
       setAvailableSlots([]);
     }
-  }, [selectedDate, selectedService, businessHours, services]);
+  }, [selectedDate, selectedServices, businessHours, services]);
 
   // Helper function to convert time string to minutes
   const timeToMinutes = (timeString: string): number => {
@@ -147,15 +150,24 @@ const HomePage = (): JSX.Element => {
 
   // Auto-generate time slots when dependencies change (but not when called directly from handleDateSelect)
   useEffect(() => {
-    if (selectedDate && selectedService && businessHours.length > 0) {
+    if (selectedDate && selectedServices.length > 0 && businessHours.length > 0) {
       void generateTimeSlots();
     }
-  }, [selectedService, businessHours, services, generateTimeSlots]); // Include services so it refreshes when services are loaded
+  }, [selectedServices, businessHours, services, generateTimeSlots]); // Include services so it refreshes when services are loaded
 
   // Event handlers
   const handleServiceSelect = useCallback((service: Service) => {
-    setSelectedService(service);
-    setCurrentStep('datetime');
+    setSelectedServices(prev => {
+      const isAlreadySelected = prev.some(s => s._id === service._id || s.id === service.id);
+      
+      if (isAlreadySelected) {
+        // Remove service if already selected
+        return prev.filter(s => s._id !== service._id && s.id !== service.id);
+      } else {
+        // Add service to selection
+        return [...prev, service];
+      }
+    });
   }, []);
 
   const handleDateSelect = useCallback((date: Date) => {
@@ -169,14 +181,14 @@ const HomePage = (): JSX.Element => {
     setCurrentStep('confirmation');
     
     // Refresh time slots to reflect the newly booked appointment
-    if (selectedDate && selectedService && businessHours.length > 0) {
+    if (selectedDate && selectedServices.length > 0 && businessHours.length > 0) {
       void generateTimeSlots(selectedDate);
     }
-  }, [selectedDate, selectedService, businessHours, generateTimeSlots]);
+  }, [selectedDate, selectedServices, businessHours, generateTimeSlots]);
 
   const resetBooking = useCallback(() => {
     setCurrentStep('service');
-    setSelectedService(null);
+    setSelectedServices([]);
     setSelectedDate(null);
     setSelectedTime(null);
     setBookingSuccess(false);
@@ -210,7 +222,7 @@ const HomePage = (): JSX.Element => {
   // Reset booking flow when navigating to homepage (ensures fresh start when clicking "Book Appointment")
   useEffect(() => {
     setCurrentStep('service');
-    setSelectedService(null);
+    setSelectedServices([]);
     setSelectedDate(null);
     setSelectedTime(null);
     setBookingSuccess(false);
@@ -289,21 +301,59 @@ const HomePage = (): JSX.Element => {
         <div className="bg-white rounded-lg shadow-lg p-6">
           {currentStep === 'service' && (
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Select a Service</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Select Service(s)</h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {services.map((service) => (
                   <ServiceCard
                     key={service._id || service.id}
                     service={service}
                     onSelect={handleServiceSelect}
-                    isSelected={selectedService?._id === service._id || selectedService?.id === service.id}
+                    isSelected={selectedServices.some(s => s._id === service._id || s.id === service.id)}
                   />
                 ))}
               </div>
+              
+              {selectedServices.length > 0 && (
+                <div className="mt-6">
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                    <h3 className="font-medium text-gray-900 mb-2">Selected Services:</h3>
+                    <div className="space-y-2">
+                      {selectedServices.map((service) => (
+                        <div key={service._id || service.id} className="flex justify-between items-center text-sm">
+                          <span>{service.name}</span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-600">{service.duration} min</span>
+                            <span className="font-medium">£{service.price}</span>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex justify-between font-medium">
+                          <span>Total Duration:</span>
+                          <span>{selectedServices.reduce((sum, s) => sum + s.duration, 0)} min</span>
+                        </div>
+                        <div className="flex justify-between font-medium">
+                          <span>Total Price:</span>
+                          <span>£{selectedServices.reduce((sum, s) => sum + s.price, 0)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setCurrentStep('datetime')}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Continue to Date & Time
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {currentStep === 'datetime' && selectedService && (
+          {currentStep === 'datetime' && selectedServices.length > 0 && (
             <div className="space-y-6">
               <div className="flex items-center justify-between mb-6">
                 <button
@@ -320,7 +370,7 @@ const HomePage = (): JSX.Element => {
                   <span>Back to Services</span>
                 </button>
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Select Date & Time for {selectedService.name}
+                  Select Date & Time for Your Services
                 </h2>
                 <div></div> {/* Spacer for centering */}
               </div>
@@ -355,11 +405,11 @@ const HomePage = (): JSX.Element => {
             </div>
           )}
 
-          {currentStep === 'details' && selectedService && selectedDate && selectedTime && (
+          {currentStep === 'details' && selectedServices.length > 0 && selectedDate && selectedTime && (
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Your Information</h2>
               <BookingForm
-                selectedService={selectedService}
+                selectedServices={selectedServices}
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
                 onComplete={handleBookingComplete}

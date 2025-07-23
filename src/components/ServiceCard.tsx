@@ -9,18 +9,23 @@ interface ServiceCardProps {
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({ service, isSelected, onSelect }) => {
-  // Updated to use darker pink background for unselected cards
   return (
     <div
       onClick={() => onSelect(service)}
-      className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg ${
+      className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg relative ${
         isSelected
           ? 'border-purple-500 bg-purple-100 shadow-md'
           : 'border-purple-300 bg-purple-50 hover:border-purple-500'
       }`}
     >
+      {isSelected && (
+        <div className="absolute top-2 right-2 bg-purple-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
+          ✓
+        </div>
+      )}
+      
       <div className="flex justify-between items-start mb-3">
-        <h3 className="text-lg font-semibold text-gray-900">{service.name}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 pr-8">{service.name}</h3>
         <div className="flex items-center space-x-1 text-green-600 font-bold">
           <span>£</span>
           <span>{service.price}</span>

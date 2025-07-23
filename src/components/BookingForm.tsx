@@ -14,7 +14,7 @@ interface BookingFormData {
 type PaymentMethod = 'cash' | 'bank_transfer';
 
 interface BookingFormProps {
-  selectedService: Service;
+  selectedServices: Service[];
   selectedDate: Date;
   selectedTime: string;
   onComplete: () => void;
@@ -22,7 +22,7 @@ interface BookingFormProps {
 }
 
 const BookingForm: React.FC<BookingFormProps> = ({ 
-  selectedService,
+  selectedServices,
   selectedDate,
   selectedTime,
   onComplete,
@@ -37,13 +37,22 @@ const BookingForm: React.FC<BookingFormProps> = ({
     setSubmitting(true);
     setSubmitError(null);
     try {
+      const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
+      const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
+      const serviceNames = selectedServices.map(service => service.name).join(', ');
+      
       const appointmentData = {
         customerName: data.customerName,
         customerEmail: data.customerEmail,
         customerPhone: data.customerPhone,
-        service: selectedService.name,
-        serviceDuration: selectedService.duration, // Include duration for conflict checking
-        servicePrice: selectedService.price,
+        service: serviceNames,
+        services: selectedServices.map(service => ({
+          name: service.name,
+          price: service.price,
+          duration: service.duration
+        })),
+        serviceDuration: totalDuration, // Include total duration for conflict checking
+        servicePrice: totalPrice,
         date: format(selectedDate, 'yyyy-MM-dd'), // Local date format YYYY-MM-DD
         time: selectedTime,
         status: 'pending' as const,
@@ -75,11 +84,19 @@ const BookingForm: React.FC<BookingFormProps> = ({
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
         <h4 className="font-medium text-gray-900 mb-2">Booking Summary</h4>
         <div className="text-sm text-gray-600 space-y-1">
-          <p><strong>Service:</strong> {selectedService.name}</p>
+          <div>
+            <strong>Services:</strong>
+            {selectedServices.map((service, index) => (
+              <div key={index} className="ml-4 flex justify-between">
+                <span>{service.name}</span>
+                <span>£{service.price} ({service.duration} min)</span>
+              </div>
+            ))}
+          </div>
           <p><strong>Date:</strong> {selectedDate.toLocaleDateString()}</p>
           <p><strong>Time:</strong> {selectedTime}</p>
-          <p><strong>Duration:</strong> {selectedService.duration} minutes</p>
-          <p><strong>Price:</strong> ${selectedService.price}</p>
+          <p><strong>Total Duration:</strong> {selectedServices.reduce((sum, s) => sum + s.duration, 0)} minutes</p>
+          <p><strong>Total Price:</strong> £{selectedServices.reduce((sum, s) => sum + s.price, 0)}</p>
         </div>
       </div>
       
@@ -173,7 +190,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 <Banknote className="h-4 w-4 mr-2 text-green-600" />
                 <div>
                   <span className="font-medium text-gray-900">Cash Payment</span>
-                  <p className="text-gray-500">Pay £{selectedService.price} in cash on the day of your appointment</p>
+                  <p className="text-gray-500">Pay £{selectedServices.reduce((sum, s) => sum + s.price, 0)} in cash on the day of your appointment</p>
                 </div>
               </label>
             </div>
@@ -191,7 +208,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 <Building2 className="h-4 w-4 mr-2 text-blue-600" />
                 <div>
                   <span className="font-medium text-gray-900">Bank Transfer After Appointment</span>
-                  <p className="text-gray-500">Pay £{selectedService.price} via bank transfer after your appointment</p>
+                  <p className="text-gray-500">Pay £{selectedServices.reduce((sum, s) => sum + s.price, 0)} via bank transfer after your appointment</p>
                 </div>
               </label>
             </div>
