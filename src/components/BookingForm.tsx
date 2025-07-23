@@ -15,6 +15,7 @@ type PaymentMethod = 'cash' | 'bank_transfer';
 
 interface BookingFormProps {
   selectedServices: Service[];
+  serviceQuantities: Map<string, number>;
   selectedDate: Date;
   selectedTime: string;
   onComplete: () => void;
@@ -23,6 +24,7 @@ interface BookingFormProps {
 
 const BookingForm: React.FC<BookingFormProps> = ({ 
   selectedServices,
+  serviceQuantities,
   selectedDate,
   selectedTime,
   onComplete,
@@ -37,9 +39,24 @@ const BookingForm: React.FC<BookingFormProps> = ({
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
-      const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
-      const serviceNames = selectedServices.map(service => service.name).join(', ');
+      const totalPrice = selectedServices.reduce((sum, service) => {
+        const serviceId = service._id || service.id || '';
+        const quantity = serviceQuantities.get(serviceId) || 1;
+        const isQuantityService = service.duration === 0 || service.category?.toLowerCase() === 'nail art';
+        return sum + (service.price * (isQuantityService ? quantity : 1));
+      }, 0);
+      
+      const totalDuration = selectedServices.reduce((sum, service) => {
+        const isQuantityService = service.duration === 0 || service.category?.toLowerCase() === 'nail art';
+        return sum + (isQuantityService ? 0 : service.duration);
+      }, 0);
+      
+      const serviceNames = selectedServices.map(service => {
+        const serviceId = service._id || service.id || '';
+        const quantity = serviceQuantities.get(serviceId) || 1;
+        const isQuantityService = service.duration === 0 || service.category?.toLowerCase() === 'nail art';
+        return isQuantityService && quantity > 1 ? `${service.name} (×${quantity})` : service.name;
+      }).join(', ');
       
       const appointmentData = {
         customerName: data.customerName,
@@ -86,17 +103,45 @@ const BookingForm: React.FC<BookingFormProps> = ({
         <div className="text-sm text-gray-600 space-y-1">
           <div>
             <strong>Services:</strong>
-            {selectedServices.map((service, index) => (
-              <div key={index} className="ml-4 flex justify-between">
-                <span>{service.name}</span>
-                <span>£{service.price} ({service.duration} min)</span>
-              </div>
-            ))}
+            {selectedServices.map((service, index) => {
+              const serviceId = service._id || service.id || '';
+              const quantity = serviceQuantities.get(serviceId) || 1;
+              const isQuantityService = service.duration === 0 || service.category?.toLowerCase() === 'nail art';
+              const totalPrice = service.price * (isQuantityService ? quantity : 1);
+              
+              return (
+                <div key={index} className="ml-4 flex justify-between">
+                  <span>
+                    {service.name}
+                    {isQuantityService && quantity > 1 && (
+                      <span className="text-gray-500 ml-1">× {quantity}</span>
+                    )}
+                  </span>
+                  <span>
+                    £{totalPrice.toFixed(2)} 
+                    {!isQuantityService && ` (${service.duration} min)`}
+                    {isQuantityService && ' (per item)'}
+                  </span>
+                </div>
+              );
+            })}
           </div>
           <p><strong>Date:</strong> {selectedDate.toLocaleDateString()}</p>
           <p><strong>Time:</strong> {selectedTime}</p>
-          <p><strong>Total Duration:</strong> {selectedServices.reduce((sum, s) => sum + s.duration, 0)} minutes</p>
-          <p><strong>Total Price:</strong> £{selectedServices.reduce((sum, s) => sum + s.price, 0)}</p>
+          <p>
+            <strong>Total Duration:</strong> {selectedServices.reduce((sum, s) => {
+              const isQuantityService = s.duration === 0 || s.category?.toLowerCase() === 'nail art';
+              return sum + (isQuantityService ? 0 : s.duration);
+            }, 0)} minutes
+          </p>
+          <p>
+            <strong>Total Price:</strong> £{selectedServices.reduce((sum, s) => {
+              const serviceId = s._id || s.id || '';
+              const quantity = serviceQuantities.get(serviceId) || 1;
+              const isQuantityService = s.duration === 0 || s.category?.toLowerCase() === 'nail art';
+              return sum + (s.price * (isQuantityService ? quantity : 1));
+            }, 0).toFixed(2)}
+          </p>
         </div>
       </div>
       
@@ -190,7 +235,12 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 <Banknote className="h-4 w-4 mr-2 text-green-600" />
                 <div>
                   <span className="font-medium text-gray-900">Cash Payment</span>
-                  <p className="text-gray-500">Pay £{selectedServices.reduce((sum, s) => sum + s.price, 0)} in cash on the day of your appointment</p>
+                  <p className="text-gray-500">Pay £{selectedServices.reduce((sum, s) => {
+                    const serviceId = s._id || s.id || '';
+                    const quantity = serviceQuantities.get(serviceId) || 1;
+                    const isQuantityService = s.duration === 0 || s.category?.toLowerCase() === 'nail art';
+                    return sum + (s.price * (isQuantityService ? quantity : 1));
+                  }, 0).toFixed(2)} in cash on the day of your appointment</p>
                 </div>
               </label>
             </div>
@@ -208,7 +258,12 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 <Building2 className="h-4 w-4 mr-2 text-blue-600" />
                 <div>
                   <span className="font-medium text-gray-900">Bank Transfer After Appointment</span>
-                  <p className="text-gray-500">Pay £{selectedServices.reduce((sum, s) => sum + s.price, 0)} via bank transfer after your appointment</p>
+                  <p className="text-gray-500">Pay £{selectedServices.reduce((sum, s) => {
+                    const serviceId = s._id || s.id || '';
+                    const quantity = serviceQuantities.get(serviceId) || 1;
+                    const isQuantityService = s.duration === 0 || s.category?.toLowerCase() === 'nail art';
+                    return sum + (s.price * (isQuantityService ? quantity : 1));
+                  }, 0).toFixed(2)} via bank transfer after your appointment</p>
                 </div>
               </label>
             </div>

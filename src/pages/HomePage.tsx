@@ -28,6 +28,7 @@ const HomePage = (): JSX.Element => {
   const [businessHours, setBusinessHours] = useState<DaySchedule[]>([]);
   const [closureDates, setClosureDates] = useState<string[]>([]);
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
+  const [serviceQuantities, setServiceQuantities] = useState<Map<string, number>>(new Map());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
@@ -166,15 +167,41 @@ const HomePage = (): JSX.Element => {
       });
       
       if (isAlreadySelected) {
+        // Remove service and its quantity
+        if (serviceId) {
+          setServiceQuantities(prevQuantities => {
+            const newQuantities = new Map(prevQuantities);
+            newQuantities.delete(serviceId);
+            return newQuantities;
+          });
+        }
         // Remove service if already selected
         return prev.filter(s => {
           const existingId = s._id || s.id;
           return existingId !== serviceId;
         });
       } else {
-        // Add service to selection
+        // Add service to selection and set default quantity for 0-duration services or nail art
+        const isQuantityService = service.duration === 0 || service.category?.toLowerCase() === 'nail art';
+        if (isQuantityService && serviceId) {
+          setServiceQuantities(prevQuantities => {
+            const newQuantities = new Map(prevQuantities);
+            newQuantities.set(serviceId, 1);
+            return newQuantities;
+          });
+        }
         return [...prev, service];
       }
+    });
+  }, []);
+
+  // Quantity change handler for quantity-based services
+  const handleQuantityChange = useCallback((service: Service, quantity: number) => {
+    const serviceId = service._id || service.id || '';
+    setServiceQuantities(prevQuantities => {
+      const newQuantities = new Map(prevQuantities);
+      newQuantities.set(serviceId, quantity);
+      return newQuantities;
     });
   }, []);
 
@@ -311,18 +338,25 @@ const HomePage = (): JSX.Element => {
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Select Service(s)</h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {services.map((service) => (
-                  <ServiceCard
-                    key={service._id || service.id}
-                    service={service}
-                    onSelect={handleServiceSelect}
-                    isSelected={selectedServices.some(s => {
-                      const selectedId = s._id || s.id;
-                      const serviceId = service._id || service.id;
-                      return selectedId === serviceId;
-                    })}
-                  />
-                ))}
+                {services.map((service) => {
+                  const serviceId = service._id || service.id || '';
+                  const quantity = serviceQuantities.get(serviceId) || 1;
+                  
+                  return (
+                    <ServiceCard
+                      key={service._id || service.id}
+                      service={service}
+                      onSelect={handleServiceSelect}
+                      isSelected={selectedServices.some(s => {
+                        const selectedId = s._id || s.id;
+                        const serviceId = service._id || service.id;
+                        return selectedId === serviceId;
+                      })}
+                      quantity={quantity}
+                      onQuantityChange={handleQuantityChange}
+                    />
+                  );
+                })}
               </div>
               
               {selectedServices.length > 0 && (
@@ -330,23 +364,52 @@ const HomePage = (): JSX.Element => {
                   <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <h3 className="font-medium text-gray-900 mb-2">Selected Services:</h3>
                     <div className="space-y-2">
-                      {selectedServices.map((service) => (
-                        <div key={service._id || service.id} className="flex justify-between items-center text-sm">
-                          <span>{service.name}</span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-gray-600">{service.duration} min</span>
-                            <span className="font-medium">£{service.price}</span>
+                      {selectedServices.map((service) => {
+                        const serviceId = service._id || service.id || '';
+                        const quantity = serviceQuantities.get(serviceId) || 1;
+                        const isQuantityService = service.duration === 0 || service.category?.toLowerCase() === 'nail art';
+                        const totalPrice = service.price * (isQuantityService ? quantity : 1);
+                        
+                        return (
+                          <div key={service._id || service.id} className="flex justify-between items-center text-sm">
+                            <span>
+                              {service.name}
+                              {isQuantityService && quantity > 1 && (
+                                <span className="text-gray-600 ml-1">× {quantity}</span>
+                              )}
+                            </span>
+                            <div className="flex items-center space-x-2">
+                              {!isQuantityService && (
+                                <span className="text-gray-600">{service.duration} min</span>
+                              )}
+                              {isQuantityService && (
+                                <span className="text-gray-600">Per item</span>
+                              )}
+                              <span className="font-medium">£{totalPrice.toFixed(2)}</span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                       <div className="border-t pt-2 mt-2">
                         <div className="flex justify-between font-medium">
                           <span>Total Duration:</span>
-                          <span>{selectedServices.reduce((sum, s) => sum + s.duration, 0)} min</span>
+                          <span>
+                            {selectedServices.reduce((sum, s) => {
+                              const isQuantityService = s.duration === 0 || s.category?.toLowerCase() === 'nail art';
+                              return sum + (isQuantityService ? 0 : s.duration);
+                            }, 0)} min
+                          </span>
                         </div>
                         <div className="flex justify-between font-medium">
                           <span>Total Price:</span>
-                          <span>£{selectedServices.reduce((sum, s) => sum + s.price, 0)}</span>
+                          <span>
+                            £{selectedServices.reduce((sum, s) => {
+                              const serviceId = s._id || s.id || '';
+                              const quantity = serviceQuantities.get(serviceId) || 1;
+                              const isQuantityService = s.duration === 0 || s.category?.toLowerCase() === 'nail art';
+                              return sum + (s.price * (isQuantityService ? quantity : 1));
+                            }, 0).toFixed(2)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -422,6 +485,7 @@ const HomePage = (): JSX.Element => {
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Your Information</h2>
               <BookingForm
                 selectedServices={selectedServices}
+                serviceQuantities={serviceQuantities}
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
                 onComplete={handleBookingComplete}

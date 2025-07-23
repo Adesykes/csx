@@ -1,24 +1,46 @@
 import React from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Plus, Minus } from 'lucide-react';
 import { Service } from '../types';
 
 interface ServiceCardProps {
   service: Service;
   isSelected: boolean;
+  quantity?: number; // For 0-duration services
   onSelect: (service: Service) => void;
+  onQuantityChange?: (service: Service, quantity: number) => void;
 }
 
-const ServiceCard: React.FC<ServiceCardProps> = ({ service, isSelected, onSelect }) => {
+const ServiceCard: React.FC<ServiceCardProps> = ({ 
+  service, 
+  isSelected, 
+  quantity = 0, 
+  onSelect, 
+  onQuantityChange 
+}) => {
+  const isQuantityService = service.duration === 0 || service.category?.toLowerCase() === 'nail art';
+  
+  const handleCardClick = () => {
+    if (!isQuantityService) {
+      onSelect(service);
+    }
+  };
+
+  const handleQuantityUpdate = (newQty: number) => {
+    if (onQuantityChange) {
+      onQuantityChange(service, newQty);
+    }
+  };
+
   return (
     <div
-      onClick={() => onSelect(service)}
-      className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg relative ${
+      onClick={handleCardClick}
+      className={`p-6 rounded-lg border-2 transition-all duration-200 hover:shadow-lg relative ${
         isSelected
           ? 'border-purple-500 bg-purple-100 shadow-md'
           : 'border-purple-300 bg-purple-50 hover:border-purple-500'
-      }`}
+      } ${!isQuantityService ? 'cursor-pointer' : ''}`}
     >
-      {isSelected && (
+      {isSelected && !isQuantityService && (
         <div className="absolute top-2 right-2 bg-purple-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
           ✓
         </div>
@@ -29,6 +51,11 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isSelected, onSelect
         <div className="flex items-center space-x-1 text-green-600 font-bold">
           <span>£</span>
           <span>{service.price}</span>
+          {isQuantityService && quantity > 0 && (
+            <span className="text-sm text-gray-600 ml-2">
+              × {quantity} = £{(service.price * quantity).toFixed(2)}
+            </span>
+          )}
         </div>
       </div>
       
@@ -37,12 +64,59 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isSelected, onSelect
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-1 text-gray-500">
           <Clock className="h-4 w-4" />
-          <span className="text-sm">{service.duration} min</span>
+          <span className="text-sm">
+            {isQuantityService ? 'Per item' : `${service.duration} min`}
+          </span>
         </div>
         <span className="text-xs text-gray-500 uppercase tracking-wide">
           {service.category}
         </span>
       </div>
+
+      {isQuantityService && (
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">Quantity:</span>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleQuantityUpdate(Math.max(0, quantity - 1));
+                }}
+                disabled={quantity === 0}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  quantity === 0
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-red-100 text-red-600 hover:bg-red-200'
+                }`}
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              
+              <span className={`w-8 text-center font-medium ${
+                quantity > 0 ? 'text-purple-600' : 'text-gray-600'
+              }`}>
+                {quantity}
+              </span>
+              
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleQuantityUpdate(Math.min(10, quantity + 1));
+                }}
+                disabled={quantity >= 10}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  quantity >= 10
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-green-100 text-green-600 hover:bg-green-200'
+                }`}
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
