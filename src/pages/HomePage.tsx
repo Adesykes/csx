@@ -565,16 +565,7 @@ const HomePage = (): JSX.Element => {
               <p className="text-gray-600 mb-6">
                 Your appointment has been successfully booked. You will receive a confirmation email shortly.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  onClick={() => {
-                    resetBooking();
-                    setCurrentStep('service');
-                  }}
-                  className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 transition-colors"
-                >
-                  Back to Services
-                </button>
+              <div className="flex justify-center">
                 <button
                   onClick={resetBooking}
                   className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
