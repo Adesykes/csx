@@ -17,7 +17,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   onSelect, 
   onQuantityChange 
 }) => {
-  const isQuantityService = service.duration === 0 || service.category?.toLowerCase() === 'nail art';
+  const isQuantityService = service.duration === 0 || 
+    service.category?.toLowerCase() === 'nail art' || 
+    service.category?.toLowerCase() === 'nail repair';
   
   const handleCardClick = () => {
     if (!isQuantityService) {
