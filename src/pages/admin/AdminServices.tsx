@@ -159,6 +159,7 @@ const AdminServices: React.FC = () => {
               >
                 <option value="">Select Category</option>
                 <option value="Gel Polish">Gel Polish</option>
+                <option value="Block Colour">Block Colour</option>
                 <option value="Nail Art">Nail Art</option>
                 <option value="Nail Repair">Nail Repair</option>
                 <option value="Builder Gel">Builder Gel</option>

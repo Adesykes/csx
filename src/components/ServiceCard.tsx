@@ -73,7 +73,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         <div className="flex items-center space-x-1 text-gray-500">
           <Clock className="h-4 w-4" />
           <span className="text-sm">
-            {isQuantityService ? 'Per item' : `${service.duration} min`}
+            {isQuantityService ? 'Per item' : 'Service'}
           </span>
         </div>
         <span className="text-xs text-gray-500 uppercase tracking-wide">

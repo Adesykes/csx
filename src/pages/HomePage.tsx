@@ -432,9 +432,6 @@ const HomePage = (): JSX.Element => {
                               )}
                             </span>
                             <div className="flex items-center space-x-2">
-                              {!isQuantityService && (
-                                <span className="text-gray-600">{service.duration} min</span>
-                              )}
                               {isQuantityService && (
                                 <span className="text-gray-600">Per item</span>
                               )}
@@ -444,17 +441,6 @@ const HomePage = (): JSX.Element => {
                         );
                       })}
                       <div className="border-t pt-2 mt-2">
-                        <div className="flex justify-between font-medium">
-                          <span>Total Duration:</span>
-                          <span>
-                            {selectedServices.reduce((sum, s) => {
-                              const isQuantityService = s.duration === 0 || 
-                                s.category?.toLowerCase() === 'nail art' || 
-                                s.category?.toLowerCase() === 'nail repair';
-                              return sum + (isQuantityService ? 0 : s.duration);
-                            }, 0)} min
-                          </span>
-                        </div>
                         <div className="flex justify-between font-medium">
                           <span>Total Price:</span>
                           <span>

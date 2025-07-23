@@ -141,7 +141,6 @@ const BookingForm: React.FC<BookingFormProps> = ({
                   </span>
                   <span>
                     £{totalPrice.toFixed(2)} 
-                    {!isQuantityService && ` (${service.duration} min)`}
                     {isQuantityService && ' (per item)'}
                   </span>
                 </div>
@@ -150,14 +149,6 @@ const BookingForm: React.FC<BookingFormProps> = ({
           </div>
           <p><strong>Date:</strong> {selectedDate.toLocaleDateString()}</p>
           <p><strong>Time:</strong> {selectedTime}</p>
-          <p>
-            <strong>Total Duration:</strong> {selectedServices.reduce((sum, s) => {
-              const isQuantityService = s.duration === 0 || 
-                s.category?.toLowerCase() === 'nail art' || 
-                s.category?.toLowerCase() === 'nail repair';
-              return sum + (isQuantityService ? 0 : s.duration);
-            }, 0)} minutes
-          </p>
           <p>
             <strong>Total Price:</strong> £{selectedServices.reduce((sum, s) => {
               const serviceId = s._id || s.id || '';
