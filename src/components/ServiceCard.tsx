@@ -22,7 +22,13 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
     service.category?.toLowerCase() === 'nail repair';
   
   const handleCardClick = () => {
-    if (!isQuantityService) {
+    if (isQuantityService) {
+      // For quantity services, clicking adds to selection if not selected
+      if (!isSelected) {
+        onSelect(service);
+      }
+    } else {
+      // For regular services, clicking toggles selection
       onSelect(service);
     }
   };
@@ -36,13 +42,13 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className={`p-6 rounded-lg border-2 transition-all duration-200 hover:shadow-lg relative ${
+      className={`p-6 rounded-lg border-2 transition-all duration-200 hover:shadow-lg relative cursor-pointer ${
         isSelected
           ? 'border-purple-500 bg-purple-100 shadow-md'
           : 'border-purple-300 bg-purple-50 hover:border-purple-500'
-      } ${!isQuantityService ? 'cursor-pointer' : ''}`}
+      }`}
     >
-      {isSelected && !isQuantityService && (
+      {isSelected && (
         <div className="absolute top-2 right-2 bg-purple-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
           ✓
         </div>
@@ -75,7 +81,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         </span>
       </div>
 
-      {isQuantityService && (
+      {isQuantityService && isSelected && (
         <div className="mt-4 pt-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">Quantity:</span>

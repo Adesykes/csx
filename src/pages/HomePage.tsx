@@ -181,14 +181,14 @@ const HomePage = (): JSX.Element => {
           return existingId !== serviceId;
         });
       } else {
-        // Add service to selection and set default quantity for 0-duration services or nail art/nail repair
+        // Add service to selection and set quantity for quantity-based services
         const isQuantityService = service.duration === 0 || 
           service.category?.toLowerCase() === 'nail art' || 
           service.category?.toLowerCase() === 'nail repair';
         if (isQuantityService && serviceId) {
           setServiceQuantities(prevQuantities => {
             const newQuantities = new Map(prevQuantities);
-            newQuantities.set(serviceId, 1);
+            newQuantities.set(serviceId, 1); // Start with quantity 1 when first selected
             return newQuantities;
           });
         }
@@ -200,11 +200,26 @@ const HomePage = (): JSX.Element => {
   // Quantity change handler for quantity-based services
   const handleQuantityChange = useCallback((service: Service, quantity: number) => {
     const serviceId = service._id || service.id || '';
-    setServiceQuantities(prevQuantities => {
-      const newQuantities = new Map(prevQuantities);
-      newQuantities.set(serviceId, quantity);
-      return newQuantities;
-    });
+    
+    if (quantity === 0) {
+      // Remove service when quantity becomes 0
+      setSelectedServices(prev => prev.filter(s => {
+        const existingId = s._id || s.id;
+        return existingId !== serviceId;
+      }));
+      setServiceQuantities(prevQuantities => {
+        const newQuantities = new Map(prevQuantities);
+        newQuantities.delete(serviceId);
+        return newQuantities;
+      });
+    } else {
+      // Update quantity
+      setServiceQuantities(prevQuantities => {
+        const newQuantities = new Map(prevQuantities);
+        newQuantities.set(serviceId, quantity);
+        return newQuantities;
+      });
+    }
   }, []);
 
   const handleDateSelect = useCallback((date: Date) => {
@@ -342,18 +357,18 @@ const HomePage = (): JSX.Element => {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {services.map((service) => {
                   const serviceId = service._id || service.id || '';
-                  const quantity = serviceQuantities.get(serviceId) || 1;
+                  const isSelected = selectedServices.some(s => {
+                    const selectedId = s._id || s.id;
+                    return selectedId === serviceId;
+                  });
+                  const quantity = serviceQuantities.get(serviceId) || 0; // Default to 0 for unselected
                   
                   return (
                     <ServiceCard
                       key={service._id || service.id}
                       service={service}
                       onSelect={handleServiceSelect}
-                      isSelected={selectedServices.some(s => {
-                        const selectedId = s._id || s.id;
-                        const serviceId = service._id || service.id;
-                        return selectedId === serviceId;
-                      })}
+                      isSelected={isSelected}
                       quantity={quantity}
                       onQuantityChange={handleQuantityChange}
                     />
