@@ -160,6 +160,7 @@ const AdminServices: React.FC = () => {
                 <option value="">Select Category</option>
                 <option value="Gel Polish">Gel Polish</option>
                 <option value="Nail Art">Nail Art</option>
+                <option value="Nail Repair">Nail Repair</option>
                 <option value="Builder Gel">Builder Gel</option>
                 <option value="Builder Gel Infill">Builder Gel Infill</option>
                 <option value="Builder Gel Overlay with Nail Art">Builder Gel Overlay with Nail Art</option>
