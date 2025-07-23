@@ -34,14 +34,15 @@ const AdminServices: React.FC = () => {
   };
 
   const handleEdit = (service: Service) => {
+    console.log('Editing service:', service); // Debug log
     setEditingService(service);
     setFormData({
-      name: service.name,
-      description: service.description,
-      price: service.price.toString(),
-      duration: service.duration.toString(),
-      category: service.category,
-      active: service.active
+      name: service.name || '',
+      description: service.description || '',
+      price: service.price?.toString() || '',
+      duration: service.duration?.toString() || '',
+      category: service.category || '',
+      active: service.active ?? true
     });
   };
 
@@ -58,7 +59,12 @@ const AdminServices: React.FC = () => {
 
       if (editingService) {
         // For update, pass serviceData directly
-        await apiClient.updateService(editingService.id, serviceData);
+        const serviceId = editingService._id || editingService.id;
+        if (serviceId) {
+          await apiClient.updateService(serviceId, serviceData);
+        } else {
+          throw new Error('Service ID not found');
+        }
       } else {
         // For create, pass serviceData directly
         await apiClient.createService(serviceData);
@@ -234,7 +240,7 @@ const AdminServices: React.FC = () => {
       {/* Services List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {services.map(service => (
-          <div key={service.id} className="bg-pink-200 rounded-lg shadow p-6">
+          <div key={service._id || service.id} className="bg-pink-200 rounded-lg shadow p-6">
             <div className="flex justify-between items-start mb-3">
               <h3 className="text-lg font-semibold text-gray-900">{service.name}</h3>
               <div className="flex space-x-2">
@@ -245,7 +251,10 @@ const AdminServices: React.FC = () => {
                   <Edit className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleDelete(service.id)}
+                  onClick={() => {
+                    const serviceId = service._id || service.id;
+                    if (serviceId) handleDelete(serviceId);
+                  }}
                   className="text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4" />
