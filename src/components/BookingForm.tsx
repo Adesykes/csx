@@ -105,23 +105,23 @@ const BookingForm: React.FC<BookingFormProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0">
         {onBack && (
           <button
             onClick={onBack}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center justify-center sm:justify-start space-x-2 text-gray-600 hover:text-gray-900 transition-colors p-2 sm:p-0 touch-manipulation"
           >
             <ChevronLeft className="h-5 w-5" />
             <span>Back to Services</span>
           </button>
         )}
-        <h3 className="text-lg font-semibold text-gray-900">Your Information</h3>
-        <div></div> {/* Spacer for centering */}
+        <h3 className="text-lg font-semibold text-gray-900 text-center">Your Information</h3>
+        <div className="hidden sm:block"></div> {/* Spacer for centering */}
       </div>
       
       {/* Booking Summary */}
-      <div className="bg-gray-50 p-4 rounded-lg mb-6">
+      <div className="bg-gray-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
         <h4 className="font-medium text-gray-900 mb-2">Booking Summary</h4>
         <div className="text-sm text-gray-600 space-y-1">
           <div>
@@ -136,8 +136,8 @@ const BookingForm: React.FC<BookingFormProps> = ({
               const totalPrice = service.price * (isQuantityService ? quantity : 1);
               
               return (
-                <div key={index} className="ml-4 flex justify-between">
-                  <span>
+                <div key={index} className="ml-2 sm:ml-4 flex justify-between items-start py-1">
+                  <span className="flex-1 mr-2">
                     {service.name}
                     {isQuantityService && quantity > 1 && (
                       <span className="text-gray-500 ml-1">× {quantity}</span>
@@ -167,7 +167,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
         </div>
       </div>
       
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 sm:space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <User className="h-4 w-4 inline mr-2" />
@@ -177,7 +177,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
             {...register('customerName', { required: 'Full name is required' })}
             type="text"
             autoComplete="name"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base sm:text-sm"
             placeholder="Enter your full name"
           />
           {errors.customerName && (
@@ -200,8 +200,8 @@ const BookingForm: React.FC<BookingFormProps> = ({
             })}
             type="email"
             autoComplete="email"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter your email"
+            className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base sm:text-sm"
+            placeholder="Enter your email address"
           />
           {errors.customerEmail && (
             <p className="mt-1 text-sm text-red-600">{errors.customerEmail.message}</p>
