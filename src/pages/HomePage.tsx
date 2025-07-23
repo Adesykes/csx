@@ -74,7 +74,7 @@ const HomePage = (): JSX.Element => {
       const [openHour, openMinute] = openTime.split(':').map(Number);
       const [closeHour, closeMinute] = closeTime.split(':').map(Number);
       
-      // Generate 30-minute slots up to and including the closing time
+      // Generate 2-hour slots up to and including the closing time
       let currentHour = openHour;
       let currentMinute = openMinute;
       
@@ -124,11 +124,11 @@ const HomePage = (): JSX.Element => {
           available: isAvailable
         });
         
-        // Add 30 minutes
-        currentMinute += 30;
+        // Add 2 hours (120 minutes)
+        currentMinute += 120;
         if (currentMinute >= 60) {
-          currentMinute = 0;
-          currentHour += 1;
+          currentHour += Math.floor(currentMinute / 60);
+          currentMinute = currentMinute % 60;
         }
       }
       
