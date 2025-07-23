@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
-import { User, Mail, Phone, MessageCircle, Banknote, Building2 } from 'lucide-react';
+import { User, Mail, Phone, MessageCircle, Banknote, Building2, ChevronLeft } from 'lucide-react';
 import type { Service } from '../types';
 
 interface BookingFormData {
@@ -19,6 +19,7 @@ interface BookingFormProps {
   selectedDate: Date;
   selectedTime: string;
   onComplete: () => void;
+  onBack?: () => void;
   isLoading?: boolean;
 }
 
@@ -28,6 +29,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
   selectedDate,
   selectedTime,
   onComplete,
+  onBack,
   isLoading = false
 }) => {
   const { register, handleSubmit, formState: { errors } } = useForm<BookingFormData>();
@@ -101,7 +103,19 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Your Information</h3>
+      <div className="flex items-center justify-between mb-6">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ChevronLeft className="h-5 w-5" />
+            <span>Back to Services</span>
+          </button>
+        )}
+        <h3 className="text-lg font-semibold text-gray-900">Your Information</h3>
+        <div></div> {/* Spacer for centering */}
+      </div>
       
       {/* Booking Summary */}
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
