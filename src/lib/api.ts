@@ -1,8 +1,10 @@
+// Smart environment detection for production deployment
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
   (import.meta.env.PROD ? 'https://csx-nail-lounge-backend.onrender.com' : 'http://localhost:3000');
-console.log('API_BASE_URL:', API_BASE_URL); // Debug log
-console.log('VITE_API_URL env var:', import.meta.env.VITE_API_URL); // Debug log
-console.log('Production mode:', import.meta.env.PROD); // Debug log
+console.log('🔧 API_BASE_URL:', API_BASE_URL); // Debug log
+console.log('🔧 VITE_API_URL env var:', import.meta.env.VITE_API_URL); // Debug log
+console.log('🔧 Development mode:', import.meta.env.DEV); // Debug log
+console.log('🔧 Production mode:', import.meta.env.PROD); // Debug log
 
 import { Service } from '../types';
 
