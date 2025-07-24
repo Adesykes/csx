@@ -282,12 +282,9 @@ const CancelAppointment: React.FC = () => {
         <div className="mt-8 text-center text-sm text-gray-600">
           <p>
             Need help? Contact us directly at{' '}
-            <a href="tel:+1234567890" className="text-blue-600 hover:text-blue-700">
-              (123) 456-7890
-            </a>{' '}
-            or{' '}
-            <a href="mailto:info@csxnaillounge.com" className="text-blue-600 hover:text-blue-700">
-              info@csxnaillounge.com
+
+            <a href="mailto:cxsnaillounge1@gmail.com" className="text-blue-600 hover:text-blue-700">
+              cxsnaillounge1@gmail.com
             </a>
           </p>
         </div>
