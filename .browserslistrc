@@ -1,0 +1,31 @@
+# Browsers that we support
+
+# Modern browsers (last 2 versions)
+last 2 Chrome versions
+last 2 Firefox versions
+last 2 Safari versions
+last 2 Edge versions
+
+# Mobile browsers
+last 2 iOS versions
+last 2 Android versions
+last 2 ChromeAndroid versions
+
+# Internet Explorer support for older systems
+IE 11
+
+# Market share and usage based
+> 1%
+not dead
+
+# Specific versions for enterprise compatibility
+Chrome >= 70
+Firefox >= 65
+Safari >= 12
+Edge >= 18
+
+# Exclude very old browsers
+not IE < 11
+not Chrome < 70
+not Firefox < 65
+not Safari < 12
