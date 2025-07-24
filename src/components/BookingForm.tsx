@@ -95,6 +95,33 @@ const BookingForm: React.FC<BookingFormProps> = ({
       const { apiClient } = await import('../lib/api');
       await apiClient.createAppointment(appointmentData);
       
+      // Send confirmation email
+      try {
+        // Convert serviceQuantities Map to plain object for API
+        const serviceQuantitiesObj: { [key: string]: number } = {};
+        serviceQuantities.forEach((quantity, serviceId) => {
+          serviceQuantitiesObj[serviceId] = quantity;
+        });
+
+        const emailData = {
+          customerName: data.customerName,
+          customerEmail: data.customerEmail,
+          services: selectedServices,
+          serviceQuantities: serviceQuantitiesObj,
+          date: format(selectedDate, 'EEEE, MMMM d, yyyy'),
+          time: selectedTime,
+          totalPrice: totalPrice,
+          paymentMethod: paymentMethod
+        };
+
+        console.log('Sending confirmation email...');
+        await apiClient.sendConfirmationEmail(emailData);
+        console.log('Confirmation email sent successfully');
+      } catch (emailError) {
+        console.error('Error sending confirmation email:', emailError);
+        // Don't fail the booking if email fails
+      }
+      
       onComplete();
     } catch (error) {
       console.error('Error creating appointment:', error);

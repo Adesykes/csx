@@ -255,6 +255,28 @@ class ApiClient {
       method: 'DELETE'
     });
   }
+
+  // Email methods
+  async sendConfirmationEmail(emailData: {
+    customerName: string;
+    customerEmail: string;
+    services: any[];
+    serviceQuantities: { [key: string]: number };
+    date: string;
+    time: string;
+    totalPrice: number;
+    paymentMethod: string;
+  }) {
+    return this.request<{
+      success: boolean;
+      customerEmailSent: boolean;
+      adminEmailSent: boolean;
+      message: string;
+    }>('/api/send-confirmation-email', {
+      method: 'POST',
+      body: JSON.stringify(emailData)
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

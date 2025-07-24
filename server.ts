@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 import { getDatabase } from './lib/mongodb.js';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
+import { sendBookingConfirmationEmail } from './api/send-confirmation-email.js';
 
 // Load environment variables
 dotenv.config();
@@ -435,6 +436,9 @@ app.post('/api/appointments', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Email confirmation endpoint
+app.post('/api/send-confirmation-email', sendBookingConfirmationEmail);
 
 // Public endpoint for checking appointment availability (no auth required)
 app.get('/api/appointments/availability', async (req, res) => {
