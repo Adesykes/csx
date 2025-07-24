@@ -244,15 +244,35 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-gray-600">
-            <p>&copy; 2025 CXS Nail Lounge. All rights reserved.</p>
-            <p className="mt-2 text-sm">Premium nail care services with online booking</p>
-          </div>
-        </div>
-      </footer>
+     {/* Footer */}
+<footer className="bg-white border-t">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="text-center text-gray-600">
+      <p>&copy; 2025 CXS Nail Lounge. All rights reserved.</p>
+      <p className="mt-2 text-sm">Premium nail care services with online booking</p>
+
+      {/* Social Icons */}
+      <div className="mt-4 flex justify-center space-x-6 text-2xl">
+        <a
+          href="https://www.instagram.com/cxsnaillounge?igsh=NjBidjUwY2V3cHpi&utm_source=gr"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-pink-500 hover:text-pink-600"
+        >
+          <i className="fab fa-instagram"></i>
+        </a>
+        <a
+          href="https://www.facebook.com/share/16hK3diSek/?mibextid=wwXIfr"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-700"
+        >
+          <i className="fab fa-facebook"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
 
       {/* Logout Notification */}
       {showLogoutNotification && (
