@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 import { getDatabase } from './lib/mongodb.js';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
-import { sendBookingConfirmationEmail } from './api/send-confirmation-email.js';
+import { sendBookingConfirmationEmail } from './api/send-confirmation-email';
 
 // Load environment variables
 dotenv.config();
