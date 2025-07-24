@@ -147,22 +147,6 @@ export class EmailService {
   <p>📞 Contact us for inquiries</p>
   <p>✉️ cxsnaillounge1@gmail.com</p>
 
-  <!-- Social Links with Icons -->
-  <div style="margin-top: 15px;">
-    <a href="https://www.instagram.com/cxsnaillounge?igsh=NjBidjUwY2V3cHpi&utm_source=gr"
-       target="_blank"
-       style="margin: 0 10px; text-decoration: none; color: #C13584; font-weight: bold;">
-      <i class="fab fa-instagram"></i> Instagram
-    </a>
-
-    <a href="https://www.facebook.com/share/16hK3diSek/?mibextid=wwXIfr"
-       target="_blank"
-       style="margin: 0 10px; text-decoration: none; color: #4267B2; font-weight: bold;">
-      <i class="fab fa-facebook"></i> Facebook
-    </a>
-  </div>
-</div>
-
           <p style="text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px;">
             We look forward to seeing you soon!<br>
             <strong>CSX Nail Lounge Team</strong>
