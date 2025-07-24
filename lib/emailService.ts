@@ -145,7 +145,7 @@ export class EmailService {
             <h4>Contact Us</h4>
             <p>📍 CSX Nail Lounge</p>
             <p>📞 Contact us for inquiries</p>
-            <p>✉️ charliesykes16@outlook.com</p>
+            <p>✉️ cxsnaillounge1@gmail.com</p>
           </div>
           
           <p style="text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px;">
@@ -196,7 +196,7 @@ IMPORTANT INFORMATION:
 CONTACT US:
 Address: CSX Nail Lounge
 Phone: Contact us for inquiries
-Email: charliesykes16@outlook.com
+Email: cxsnaillounge1@gmail.com
 
 We look forward to seeing you soon!
 
