@@ -20,8 +20,9 @@ export class EmailService {
       const emailHtml = this.generateBookingEmailTemplate(booking);
       const emailText = this.generateBookingEmailText(booking);
 
+      // Send to actual customer email address
       const { data, error } = await this.resend.emails.send({
-        from: 'CSX Nail Lounge <bookings@csxnaillounge.co.uk>',
+        from: 'CXS Booking System <bookings@csxnaillounge.co.uk>',
         to: [booking.customerEmail],
         subject: `Booking Confirmation - ${booking.date} at ${booking.time}`,
         html: emailHtml,
@@ -46,8 +47,8 @@ export class EmailService {
       const emailHtml = this.generateAdminEmailTemplate(booking);
 
       const { data, error } = await this.resend.emails.send({
-        from: 'CSX Booking System <admin@csxnaillounge.co.uk>',
-        to: ['sykesade@googlemail.com'], // Changed to your verified email
+        from: 'CXS Booking System <admin@csxnaillounge.co.uk>',
+        to: ['charliesykes16@outlook.com'], // Admin notifications go to Charlie's email
         subject: `New Booking - ${booking.customerName} on ${booking.date}`,
         html: emailHtml,
       });
@@ -144,7 +145,7 @@ export class EmailService {
             <h4>Contact Us</h4>
             <p>📍 CSX Nail Lounge</p>
             <p>📞 Contact us for inquiries</p>
-            <p>✉️ cxsnaillounge@hotmail.com</p>
+            <p>✉️ charliesykes16@outlook.com</p>
           </div>
           
           <p style="text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px;">
@@ -195,7 +196,7 @@ IMPORTANT INFORMATION:
 CONTACT US:
 Address: CSX Nail Lounge
 Phone: Contact us for inquiries
-Email: cxsnaillounge@hotmail.com
+Email: charliesykes16@outlook.com
 
 We look forward to seeing you soon!
 
