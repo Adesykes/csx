@@ -68,7 +68,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Link>
               {/* Socials */}
               <a
-                href="https://www.instagram.com/cxsnaillounge?igsh=NjBidjUwY2V3cHpi&utm_source=qr"
+                href="https://www.instagram.com/cxs.naillounge?igsh=NjBidjUwY2V3cHpi&utm_source=qr"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 text-pink-600 hover:text-pink-800"
