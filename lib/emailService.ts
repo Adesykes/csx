@@ -141,13 +141,12 @@ export class EmailService {
             </p>
           </div>
           
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
-            <h4>Contact Us</h4>
-            <p>📍 CSX Nail Lounge</p>
-            <p>📞 Contact us for inquiries</p>
-            <p>✉️ cxsnaillounge1@gmail.com</p>
-          </div>
-          
+         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
+  <h4>Contact Us</h4>
+  <p>📍 CSX Nail Lounge</p>
+  <p>📞 Contact us for inquiries</p>
+  <p>✉️ cxsnaillounge1@gmail.com</p>
+
           <p style="text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px;">
             We look forward to seeing you soon!<br>
             <strong>CSX Nail Lounge Team</strong>
