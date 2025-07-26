@@ -31,8 +31,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (wasAdminRoute && !isAdminRoute && !location.pathname.startsWith('/admin')) {
       handleLogout('Navigated from admin to customer view');
     }
-    
-    // Update the tracking state
     setWasAdminRoute(isAdminRoute);
   }, [location.pathname, isAdminRoute, wasAdminRoute]);
 
@@ -50,23 +48,40 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link 
-              to="/" 
-              className="flex items-center space-x-2"
-              onClick={() => {
-                if (isAdminRoute) {
-                  handleLogout('Clicked logo from admin route');
-                }
-              }}
-            >
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">CXS</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">CXS Nail Lounge</h1>
-                <p className="text-xs text-gray-500">Premium Nail Care</p>
-              </div>
-            </Link>
+            <div className="flex items-center space-x-4">
+              <Link 
+                to="/" 
+                className="flex items-center space-x-2"
+                onClick={() => {
+                  if (isAdminRoute) {
+                    handleLogout('Clicked logo from admin route');
+                  }
+                }}
+              >
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">CXS</span>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">CXS Nail Lounge</h1>
+                  <p className="text-xs text-gray-500">Premium Nail Care</p>
+                </div>
+              </Link>
+              {/* Socials */}
+              <a
+                href="https://www.instagram.com/cxsnaillounge?igsh=NjBidjUwY2V3cHpi&utm_source=qr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 text-pink-600 hover:text-pink-800"
+                aria-label="Instagram"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                  <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                  <circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                  <circle cx="17" cy="7" r="1" stroke="currentColor" strokeWidth="1.5" fill="currentColor"/>
+                </svg>
+                <span className="hidden sm:inline">Instagram</span>
+              </a>
+            </div>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
@@ -244,7 +259,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
 
- {/* Footer */}
+      {/* Footer */}
       <footer className="bg-white border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600">
