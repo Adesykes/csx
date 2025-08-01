@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Check, DollarSign, CreditCard, Banknote, X, Trash2, Building2 } from 'lucide-react';
+import { Check, DollarSign, CreditCard, Banknote, X, Trash2, Building2, Mail, Phone } from 'lucide-react';
 import { apiClient } from '../../lib/api';
 import type { Appointment } from '../../lib/api';
 
@@ -37,10 +37,7 @@ const AdminAppointments: React.FC = () => {
     setLoading(true);
     try {
       await apiClient.markPaymentReceived(appointmentId, 'paid');
-      // Refresh appointments list
       await fetchAppointments();
-      
-      // Show success message and suggest refreshing revenue
       alert('Payment marked as received! Remember to refresh the Revenue page to see updated totals.');
     } catch (error) {
       console.error('Error marking payment as received:', error);
@@ -54,16 +51,11 @@ const AdminAppointments: React.FC = () => {
     setLoading(true);
     try {
       if (status === 'cancelled') {
-        // Use the dedicated cancellation endpoint for cancelled status
         await apiClient.cancelAppointment(appointmentId);
       } else {
-        // Use the regular update endpoint for other status changes
         await apiClient.updateAppointment(appointmentId, status);
       }
-      // Refresh appointments list
       await fetchAppointments();
-      
-      // Show success message for completed appointments
       if (status === 'completed') {
         alert('Appointment marked as completed! Remember to refresh the Revenue page to see updated totals.');
       }
@@ -80,7 +72,6 @@ const AdminAppointments: React.FC = () => {
       setLoading(true);
       try {
         await apiClient.cancelAppointment(appointmentId);
-        // Refresh appointments list
         await fetchAppointments();
       } catch (error) {
         console.error('Error cancelling appointment:', error);
@@ -92,13 +83,12 @@ const AdminAppointments: React.FC = () => {
   };
 
   const deleteAppointment = async (appointmentId: string, customerName: string, service: string, date: string) => {
-    const confirmMessage = `⚠️ PERMANENT DELETE WARNING ⚠️\n\nAre you sure you want to PERMANENTLY DELETE this appointment?\n\nCustomer: ${customerName}\nService: ${service}\nDate: ${date}\n\nThis action CANNOT be undone and will remove the appointment completely from the system.`;
+    const confirmMessage = `Are you sure you want to PERMANENTLY DELETE this appointment?\n\nCustomer: ${customerName}\nService: ${service}\nDate: ${date}\n\nThis action CANNOT be undone and will remove the appointment completely from the system.`;
     
     if (window.confirm(confirmMessage)) {
       setLoading(true);
       try {
         await apiClient.deleteAppointment(appointmentId);
-        // Refresh appointments list
         await fetchAppointments();
         alert('Appointment permanently deleted from the system.');
       } catch (error) {
@@ -118,6 +108,7 @@ const AdminAppointments: React.FC = () => {
           <thead>
             <tr className="bg-gray-100">
               <th className="py-2 px-4 border-b">Customer</th>
+              <th className="py-2 px-4 border-b">Contact Details</th>
               <th className="py-2 px-4 border-b">Service</th>
               <th className="py-2 px-4 border-b">Date</th>
               <th className="py-2 px-4 border-b">Time</th>
@@ -132,6 +123,20 @@ const AdminAppointments: React.FC = () => {
             {appointments.map((appointment) => (
               <tr key={appointment._id} className="hover:bg-gray-50">
                 <td className="py-2 px-4 border-b">{appointment.customerName}</td>
+                <td className="py-2 px-4 border-b">
+                  <div className="flex flex-col gap-1">
+                    <a href={`mailto:${appointment.customerEmail}`} 
+                       className="flex items-center text-blue-600 hover:text-blue-800 text-sm">
+                      <Mail className="h-3 w-3 mr-1" />
+                      {appointment.customerEmail}
+                    </a>
+                    <a href={`tel:${appointment.customerPhone}`} 
+                       className="flex items-center text-blue-600 hover:text-blue-800 text-sm">
+                      <Phone className="h-3 w-3 mr-1" />
+                      {appointment.customerPhone}
+                    </a>
+                  </div>
+                </td>
                 <td className="py-2 px-4 border-b">{appointment.service}</td>
                 <td className="py-2 px-4 border-b">
                   {format(new Date(appointment.date), 'MMM d, yyyy')}
