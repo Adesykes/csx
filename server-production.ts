@@ -507,7 +507,17 @@ app.get('/api/debug/appointments', async (req, res) => {
       total: appointments.length,
       byStatus: {} as Record<string, number>,
       byPaymentStatus: {} as Record<string, number>,
-      completedAndPaid: 0
+      completedAndPaid: 0,
+      paymentMethods: {} as Record<string, number>,
+      rawAppointments: appointments.map(apt => ({
+        _id: apt._id,
+        date: apt.date,
+        paymentMethod: apt.paymentMethod,
+        paymentStatus: apt.paymentStatus,
+        status: apt.status,
+        servicePrice: apt.servicePrice,
+        service: apt.service
+      }))
     };
     
     appointments.forEach(apt => {
@@ -516,6 +526,9 @@ app.get('/api/debug/appointments', async (req, res) => {
       
       // Count by payment status
       summary.byPaymentStatus[apt.paymentStatus] = (summary.byPaymentStatus[apt.paymentStatus] || 0) + 1;
+      
+      // Count by payment method
+      summary.paymentMethods[apt.paymentMethod || 'undefined'] = (summary.paymentMethods[apt.paymentMethod || 'undefined'] || 0) + 1;
       
       // Count completed and paid
       if (apt.status === 'completed' && apt.paymentStatus === 'paid') {
