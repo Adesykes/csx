@@ -555,17 +555,6 @@ app.get('/api/revenue', authMiddleware, async (req, res) => {
     const db = await getDatabase();
     const appointmentsCollection = db.collection('appointments');
 
-    // First, let's get raw data to debug
-    const rawData = await appointmentsCollection.find({
-      date: { $gte: startDate, $lte: endDate },
-      $or: [
-        { status: 'completed', paymentStatus: 'paid' },
-        { paymentStatus: 'paid' }
-      ]
-    }).toArray();
-
-    console.log('🔍 DEBUG - Raw appointments for revenue:', JSON.stringify(rawData, null, 2));
-
     const pipeline = [
       {
         $match: {
@@ -615,7 +604,6 @@ app.get('/api/revenue', authMiddleware, async (req, res) => {
     ];
 
     const revenueData = await appointmentsCollection.aggregate(pipeline).toArray();
-    console.log('🔍 DEBUG - Aggregated revenue data:', JSON.stringify(revenueData, null, 2));
 
     // Process services data for each day
     const processedData = revenueData.map(day => {
@@ -628,16 +616,10 @@ app.get('/api/revenue', authMiddleware, async (req, res) => {
         servicesMap[service.name].count += 1;
         servicesMap[service.name].revenue += service.price;
         
-        console.log(`🔍 DEBUG - Service: ${service.name}, PaymentMethod: '${service.paymentMethod}', Price: ${service.price}`);
-        
         if (service.paymentMethod === 'bank_transfer' || service.paymentMethod === 'online') {
           servicesMap[service.name].onlineRevenue += service.price;
-          console.log(`✅ Added ${service.price} to onlineRevenue for ${service.name}`);
         } else if (service.paymentMethod === 'cash') {
           servicesMap[service.name].cashRevenue += service.price;
-          console.log(`✅ Added ${service.price} to cashRevenue for ${service.name}`);
-        } else {
-          console.log(`❌ Unmatched payment method: '${service.paymentMethod}' for ${service.name}`);
         }
       });
 
@@ -651,7 +633,6 @@ app.get('/api/revenue', authMiddleware, async (req, res) => {
       };
     });
 
-    console.log('🔍 DEBUG - Final processed data:', JSON.stringify(processedData, null, 2));
     res.json(processedData);
   } catch (error) {
     console.error('Error fetching revenue:', error);
