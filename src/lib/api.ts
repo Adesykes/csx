@@ -36,13 +36,16 @@ interface AuthResponse {
 }
 
 interface Revenue {
-  total: number;
-  appointments: Array<{
-    _id: string;
-    customerName: string;
-    service: string;
-    amount: number;
-    date: string;
+  date: string;
+  totalRevenue: number;
+  appointmentCount: number;
+  onlinePayments: number;
+  cashPayments: number;
+  services: Record<string, {
+    count: number;
+    revenue: number;
+    onlineRevenue: number;
+    cashRevenue: number;
   }>;
 }
 
