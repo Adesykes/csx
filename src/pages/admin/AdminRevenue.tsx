@@ -77,11 +77,28 @@ const AdminRevenue: React.FC = () => {
 
       const revenueData = await apiClient.getRevenue(start, end);
 
+      // Temporary debug for production issue
+      console.log('🐛 PRODUCTION DEBUG - Revenue Data:', JSON.stringify(revenueData, null, 2));
+      
       setRevenue(revenueData as unknown as ApiRevenueData[]);
       setTotalRevenue(revenueData.reduce((sum: number, day: any) => sum + day.totalRevenue, 0));
       setTotalAppointments(revenueData.reduce((sum: number, day: any) => sum + day.appointmentCount, 0));
-      setTotalBankTransfers(revenueData.reduce((sum: number, day: any) => sum + (day.onlinePayments || 0), 0));
-      setTotalCashPayments(revenueData.reduce((sum: number, day: any) => sum + (day.cashPayments || 0), 0));
+      
+      // Debug the bank transfers calculation
+      const bankTransfers = revenueData.reduce((sum: number, day: any) => {
+        console.log('🐛 Day:', day.date, 'onlinePayments:', day.onlinePayments, 'type:', typeof day.onlinePayments);
+        return sum + (day.onlinePayments || 0);
+      }, 0);
+      console.log('🐛 Total Bank Transfers:', bankTransfers);
+      setTotalBankTransfers(bankTransfers);
+      
+      // Debug the cash calculation
+      const cashPayments = revenueData.reduce((sum: number, day: any) => {
+        console.log('🐛 Day:', day.date, 'cashPayments:', day.cashPayments, 'type:', typeof day.cashPayments);
+        return sum + (day.cashPayments || 0);
+      }, 0);
+      console.log('🐛 Total Cash Payments:', cashPayments);
+      setTotalCashPayments(cashPayments);
     } catch (error) {
       console.error('Error fetching revenue:', error);
     } finally {
