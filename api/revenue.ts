@@ -25,6 +25,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const db = await getDatabase();
     const appointmentsCollection = db.collection('appointments');
 
+    // Debug: Check what appointments exist in the date range
+    const debugAppointments = await appointmentsCollection.find({
+      date: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    }).toArray();
+    
+    console.log('🔍 PRODUCTION API - All appointments in range:', JSON.stringify(debugAppointments.map(apt => ({
+      date: apt.date,
+      service: apt.service || apt.serviceName,
+      paymentMethod: apt.paymentMethod,
+      paymentStatus: apt.paymentStatus,
+      status: apt.status,
+      servicePrice: apt.servicePrice,
+      // Include all fields to see structure
+      allFields: Object.keys(apt)
+    })), null, 2));
+
     const pipeline = [
       {
         $match: {
@@ -70,6 +89,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ];
 
     const revenueData = await appointmentsCollection.aggregate(pipeline).toArray();
+    
+    console.log('🔍 PRODUCTION API - Raw aggregation result:', JSON.stringify(revenueData, null, 2));
 
     // Process services data for each day
     const processedData = revenueData.map(day => {
