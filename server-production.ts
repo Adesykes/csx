@@ -577,7 +577,16 @@ app.get('/api/revenue', authMiddleware, async (req, res) => {
           appointmentCount: { $sum: 1 },
           onlinePayments: {
             $sum: {
-              $cond: [{ $eq: ['$paymentMethod', 'bank_transfer'] }, '$servicePrice', 0]
+              $cond: [
+                { 
+                  $or: [
+                    { $eq: ['$paymentMethod', 'bank_transfer'] },
+                    { $eq: ['$paymentMethod', 'online'] }
+                  ]
+                }, 
+                '$servicePrice', 
+                0
+              ]
             }
           },
           cashPayments: {
@@ -612,7 +621,7 @@ app.get('/api/revenue', authMiddleware, async (req, res) => {
         servicesMap[service.name].count += 1;
         servicesMap[service.name].revenue += service.price;
         
-        if (service.paymentMethod === 'bank_transfer') {
+        if (service.paymentMethod === 'bank_transfer' || service.paymentMethod === 'online') {
           servicesMap[service.name].onlineRevenue += service.price;
         } else if (service.paymentMethod === 'cash') {
           servicesMap[service.name].cashRevenue += service.price;
