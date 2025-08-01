@@ -187,14 +187,14 @@ const AdminAppointments: React.FC = () => {
                 </td>
                 <td className="py-2 px-4 border-b">
                   <div className="flex items-center gap-2">
-                    {appointment.paymentMethod === 'cash' && appointment.paymentStatus === 'pending' && (
+                    {(appointment.paymentMethod === 'cash' || appointment.paymentMethod === 'bank_transfer') && appointment.paymentStatus === 'pending' && (
                       <button
                         onClick={() => markPaymentReceived(appointment._id)}
                         disabled={loading}
                         className="flex items-center px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 text-sm"
                       >
                         <DollarSign className="h-4 w-4 mr-1" />
-                        Mark Paid
+                        {appointment.paymentMethod === 'cash' ? 'Mark Cash Paid' : 'Mark Transfer Received'}
                       </button>
                     )}
                     {appointment.paymentStatus === 'paid' && (
