@@ -10,12 +10,12 @@ interface ApiRevenueData {
   date: string;
   totalRevenue: number;
   appointmentCount: number;
-  onlinePayments: number;
+  onlinePayments: number; // This represents bank transfers
   cashPayments: number;
   services: Record<string, { 
     count: number; 
     revenue: number; 
-    onlineRevenue: number; 
+    onlineRevenue: number; // This represents bank transfer revenue
     cashRevenue: number; 
   }>;
 }
@@ -30,7 +30,7 @@ const AdminRevenue: React.FC = () => {
   const [customEndDate, setCustomEndDate] = useState('');
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalAppointments, setTotalAppointments] = useState(0);
-  const [totalOnlinePayments, setTotalOnlinePayments] = useState(0);
+  const [totalBankTransfers, setTotalBankTransfers] = useState(0);
   const [totalCashPayments, setTotalCashPayments] = useState(0);
 
   useEffect(() => {
@@ -80,7 +80,7 @@ const AdminRevenue: React.FC = () => {
       setRevenue(revenueData as unknown as ApiRevenueData[]);
       setTotalRevenue(revenueData.reduce((sum: number, day: any) => sum + day.totalRevenue, 0));
       setTotalAppointments(revenueData.reduce((sum: number, day: any) => sum + day.appointmentCount, 0));
-      setTotalOnlinePayments(revenueData.reduce((sum: number, day: any) => sum + (day.onlinePayments || 0), 0));
+      setTotalBankTransfers(revenueData.reduce((sum: number, day: any) => sum + (day.onlinePayments || 0), 0));
       setTotalCashPayments(revenueData.reduce((sum: number, day: any) => sum + (day.cashPayments || 0), 0));
     } catch (error) {
       console.error('Error fetching revenue:', error);
@@ -92,7 +92,7 @@ const AdminRevenue: React.FC = () => {
   const exportToCSV = () => {
     const { start, end } = getDateRange();
     const csvData = [
-      ['Date', 'Revenue', 'Appointments', 'Online Payments', 'Cash Payments', 'Services'],
+      ['Date', 'Revenue', 'Appointments', 'Bank Transfers', 'Cash Payments', 'Services'],
       ...revenue.map(day => [
         day.date,
         day.totalRevenue.toFixed(2),
@@ -297,8 +297,8 @@ const AdminRevenue: React.FC = () => {
               <CreditCard className="h-8 w-8 text-blue-600" />
             </div>
             <div className="ml-4">
-              <div className="text-sm font-medium text-gray-500">Online Payments</div>
-              <div className="text-2xl font-bold text-gray-900">£{totalOnlinePayments.toFixed(2)}</div>
+              <div className="text-sm font-medium text-gray-500">Bank Transfers</div>
+              <div className="text-2xl font-bold text-gray-900">£{totalBankTransfers.toFixed(2)}</div>
             </div>
           </div>
         </div>

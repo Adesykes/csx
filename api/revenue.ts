@@ -28,22 +28,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const pipeline = [
       {
         $match: {
-          appointmentDate: {
+          date: {
             $gte: startDate,
             $lte: endDate
           },
-          status: 'completed'
+          $or: [
+            // Include completed appointments that are paid
+            { status: 'completed', paymentStatus: 'paid' },
+            // Include any appointment where payment is received (for cash payments)
+            { paymentStatus: 'paid' }
+          ]
         }
       },
       {
         $group: {
-          _id: '$appointmentDate',
+          _id: '$date',
           totalRevenue: { $sum: '$servicePrice' },
           appointmentCount: { $sum: 1 },
+          onlinePayments: {
+            $sum: {
+              $cond: [{ $eq: ['$paymentMethod', 'bank_transfer'] }, '$servicePrice', 0]
+            }
+          },
+          cashPayments: {
+            $sum: {
+              $cond: [{ $eq: ['$paymentMethod', 'cash'] }, '$servicePrice', 0]
+            }
+          },
           services: {
             $push: {
-              name: '$serviceName',
-              price: '$servicePrice'
+              name: '$service',
+              price: '$servicePrice',
+              paymentMethod: '$paymentMethod'
             }
           }
         }
@@ -57,20 +73,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Process services data for each day
     const processedData = revenueData.map(day => {
-      const servicesMap: { [key: string]: { count: number; revenue: number } } = {};
+      const servicesMap: { [key: string]: { count: number; revenue: number; onlineRevenue: number; cashRevenue: number } } = {};
       
       day.services.forEach((service: any) => {
         if (!servicesMap[service.name]) {
-          servicesMap[service.name] = { count: 0, revenue: 0 };
+          servicesMap[service.name] = { count: 0, revenue: 0, onlineRevenue: 0, cashRevenue: 0 };
         }
         servicesMap[service.name].count += 1;
         servicesMap[service.name].revenue += service.price;
+        
+        if (service.paymentMethod === 'bank_transfer') {
+          servicesMap[service.name].onlineRevenue += service.price;
+        } else if (service.paymentMethod === 'cash') {
+          servicesMap[service.name].cashRevenue += service.price;
+        }
       });
 
       return {
         date: day._id,
         totalRevenue: day.totalRevenue,
         appointmentCount: day.appointmentCount,
+        onlinePayments: day.onlinePayments,
+        cashPayments: day.cashPayments,
         services: servicesMap
       };
     });
