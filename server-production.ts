@@ -589,12 +589,7 @@ app.get('/api/revenue', authMiddleware, async (req, res) => {
           onlinePayments: {
             $sum: {
               $cond: [
-                { 
-                  $or: [
-                    { $eq: ['$paymentMethod', 'bank_transfer'] },
-                    { $eq: ['$paymentMethod', 'online'] }
-                  ]
-                }, 
+                { $in: ['$paymentMethod', ['bank_transfer', 'online']] }, 
                 '$servicePrice', 
                 0
               ]
