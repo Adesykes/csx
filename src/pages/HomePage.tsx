@@ -5,6 +5,7 @@ import { apiClient } from '../lib/api';
 import { Service } from '../types';
 import { TimeSlot } from '../lib/api';
 import ServiceCard from '../components/ServiceCard';
+import ServiceCardSkeleton from '../components/ServiceCardSkeleton';
 import Calendar from '../components/Calendar';
 import TimeSlotPicker from '../components/TimeSlotPicker';
 import BookingForm from '../components/BookingForm';
@@ -25,6 +26,7 @@ const HomePage = (): JSX.Element => {
   // State management
   const [currentStep, setCurrentStep] = useState<BookingStep>('service');
   const [services, setServices] = useState<Service[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
   const [businessHours, setBusinessHours] = useState<DaySchedule[]>([]);
   const [closureDates, setClosureDates] = useState<string[]>([]);
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
@@ -252,6 +254,7 @@ const HomePage = (): JSX.Element => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        setServicesLoading(true);
         // Load services
         const servicesData = await apiClient.getServices();
         setServices(servicesData);
@@ -266,6 +269,8 @@ const HomePage = (): JSX.Element => {
         setClosureDates(closureDatesStrings);
       } catch (err) {
         console.error('Error loading data:', err);
+      } finally {
+        setServicesLoading(false);
       }
     };
 
@@ -358,55 +363,81 @@ const HomePage = (): JSX.Element => {
               
               {/* Main Services (duration > 0) */}
               <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {services
-                  .filter(service => service.duration > 0)
-                  .map((service) => {
-                    const serviceId = service._id || service.id || '';
-                    const isSelected = selectedServices.some(s => {
-                      const selectedId = s._id || s.id;
-                      return selectedId === serviceId;
-                    });
-                    const quantity = serviceQuantities.get(serviceId) || 0;
-                    
-                    return (
-                      <ServiceCard
-                        key={service._id || service.id}
-                        service={service}
-                        onSelect={handleServiceSelect}
-                        isSelected={isSelected}
-                        quantity={quantity}
-                        onQuantityChange={handleQuantityChange}
-                      />
-                    );
-                  })}
+                {servicesLoading ? (
+                  // Show loading skeletons
+                  Array.from({ length: 6 }).map((_, index) => (
+                    <ServiceCardSkeleton key={index} />
+                  ))
+                ) : services.filter(service => service.duration > 0).length === 0 ? (
+                  // Show message when no main services available
+                  <div className="col-span-full text-center py-8">
+                    <p className="text-gray-500">No services available at the moment.</p>
+                  </div>
+                ) : (
+                  // Show actual services
+                  services
+                    .filter(service => service.duration > 0)
+                    .map((service) => {
+                      const serviceId = service._id || service.id || '';
+                      const isSelected = selectedServices.some(s => {
+                        const selectedId = s._id || s.id;
+                        return selectedId === serviceId;
+                      });
+                      const quantity = serviceQuantities.get(serviceId) || 0;
+                      
+                      return (
+                        <ServiceCard
+                          key={service._id || service.id}
+                          service={service}
+                          onSelect={handleServiceSelect}
+                          isSelected={isSelected}
+                          quantity={quantity}
+                          onQuantityChange={handleQuantityChange}
+                        />
+                      );
+                    })
+                )}
               </div>
 
-              {/* Extras Section (duration === 0) - Only show if a main service is selected */}
-              {selectedServices.some(service => service.duration > 0) && (
+              {/* Extras Section (duration === 0) - Only show if a main service is selected or while loading */}
+              {(selectedServices.some(service => service.duration > 0) || servicesLoading) && (
                 <div className="mt-6 sm:mt-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3 sm:mb-4">SELECT EXTRAS</h3>
                   <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {services
-                      .filter(service => service.duration === 0)
-                      .map((service) => {
-                        const serviceId = service._id || service.id || '';
-                        const isSelected = selectedServices.some(s => {
-                          const selectedId = s._id || s.id;
-                          return selectedId === serviceId;
-                        });
-                        const quantity = serviceQuantities.get(serviceId) || 0;
-                        
-                        return (
-                          <ServiceCard
-                            key={service._id || service.id}
-                            service={service}
-                            onSelect={handleServiceSelect}
-                            isSelected={isSelected}
-                            quantity={quantity}
-                            onQuantityChange={handleQuantityChange}
-                          />
-                        );
-                      })}
+                    {servicesLoading ? (
+                      // Show loading skeletons for extras
+                      Array.from({ length: 3 }).map((_, index) => (
+                        <ServiceCardSkeleton key={`extra-${index}`} />
+                      ))
+                    ) : services.filter(service => service.duration === 0).length === 0 ? (
+                      // Show message when no extras available
+                      <div className="col-span-full text-center py-4">
+                        <p className="text-gray-500 text-sm">No extras available.</p>
+                      </div>
+                    ) : (
+                      // Show actual extras
+                      services
+                        .filter(service => service.duration === 0)
+                        .map((service) => {
+                          const serviceId = service._id || service.id || '';
+                          const isSelected = selectedServices.some(s => {
+                            const selectedId = s._id || s.id;
+                            return selectedId === serviceId;
+                          });
+                          const quantity = serviceQuantities.get(serviceId) || 0;
+                          
+                          return (
+                            <ServiceCard
+                              key={service._id || service.id}
+                              service={service}
+                              onSelect={handleServiceSelect}
+                              isSelected={isSelected}
+                              quantity={quantity}
+                              onQuantityChange={handleQuantityChange}
+                            />
+                          );
+                        })
+                    )}
                   </div>
                 </div>
               )}
