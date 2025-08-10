@@ -903,6 +903,57 @@ app.post('/api/reviews', async (req, res) => {
   }
 });
 
+// Update review status (admin only)
+app.patch('/api/reviews/:reviewId/status', authMiddleware, async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const { status } = req.body;
+    
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ error: 'Status must be approved or rejected' });
+    }
+    
+    const db = await getDatabase();
+    const result = await db.collection('reviews').updateOne(
+      { _id: new ObjectId(reviewId) },
+      { 
+        $set: { 
+          status,
+          updatedAt: new Date().toISOString()
+        }
+      }
+    );
+    
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+    
+    res.json({ message: 'Review status updated successfully' });
+  } catch (error) {
+    console.error('Error updating review status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete review (admin only)
+app.delete('/api/reviews/:reviewId', authMiddleware, async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    
+    const db = await getDatabase();
+    const result = await db.collection('reviews').deleteOne({ _id: new ObjectId(reviewId) });
+    
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+    
+    res.json({ message: 'Review deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`API Server running on port ${PORT}`);
 });
