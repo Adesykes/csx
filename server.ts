@@ -935,7 +935,7 @@ app.patch('/api/appointments/:id/change', async (req, res) => {
       customerEmail: originalAppointment.customerEmail,
       customerPhone: originalAppointment.customerPhone,
       serviceId: serviceId || originalAppointment.serviceId,
-      serviceName: serviceName || originalAppointment.serviceName,
+      service: serviceName || originalAppointment.service, // Fixed: use 'service' field instead of 'serviceName'
       servicePrice: servicePrice || originalAppointment.servicePrice,
       date: appointmentDate,
       time: startTime,
