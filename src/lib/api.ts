@@ -1,9 +1,9 @@
-// Smart environment detection for production deployment
+// Smart environment detection for production deployment - v2
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
     ? 'http://localhost:3000' 
     : ''); // Use same domain (Vercel) in production
-console.log('🔧 API_BASE_URL:', API_BASE_URL); // Debug log
+console.log('🔧 API_BASE_URL (v2):', API_BASE_URL); // Debug log
 console.log('🔧 VITE_API_URL env var:', import.meta.env.VITE_API_URL); // Debug log
 console.log('🔧 Current hostname:', window.location.hostname); // Debug log
 console.log('🔧 Development mode:', import.meta.env.DEV); // Debug log
