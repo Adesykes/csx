@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Calendar, AlertCircle, Check, X } from 'lucide-react';
 import { format, addDays, startOfDay } from 'date-fns';
 import { apiClient } from '../lib/api';
@@ -42,12 +42,6 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
     loadBusinessData();
     checkIfCanChange();
   }, []);
-
-  useEffect(() => {
-    if (selectedDate) {
-      loadAvailableSlots();
-    }
-  }, [selectedDate, selectedService]);
 
   // Generate available dates when business hours and closure dates are loaded
   useEffect(() => {
@@ -135,33 +129,119 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
     }
   };
 
-  const loadAvailableSlots = async () => {
-    if (!selectedDate || !selectedService) return;
+  const loadAvailableSlots = useCallback(async () => {
+    if (!selectedDate || !selectedService || businessHours.length === 0) return;
 
     try {
-      const dateString = selectedDate.toISOString().split('T')[0];
-      const availability = await apiClient.getAppointmentAvailability();
+      // Calculate total duration for the selected service
+      const totalDuration = selectedService.duration;
       
-      // Filter slots for the selected date and calculate end times
-      const slotsForDate = availability
-        .filter(slot => slot.date === dateString)
-        .map(slot => {
-          const startTime = new Date(`${slot.date}T${slot.time}`);
-          const endTime = new Date(startTime.getTime() + (selectedService.duration * 60000));
-          
-          return {
-            ...slot,
-            available: true, // The API should already filter for available slots
-            endTime: endTime.toTimeString().slice(0, 5)
-          };
+      // Get the day of the week
+      const dayOfWeek = format(selectedDate, 'EEEE'); // Returns Monday, Tuesday, etc.
+      
+      const daySchedule = businessHours.find((schedule: any) => schedule.day === dayOfWeek);
+      
+      if (!daySchedule || !daySchedule.isOpen) {
+        setAvailableSlots([]);
+        return;
+      }
+      
+      // Get existing appointments for the target date
+      let dayAppointments: any[] = [];
+      try {
+        const existingAppointments = await apiClient.getAppointmentAvailability();
+        const targetDateString = format(selectedDate, 'yyyy-MM-dd');
+        dayAppointments = existingAppointments.filter(apt => apt.date === targetDateString);
+      } catch (error) {
+        console.error('Error fetching appointment availability:', error);
+        // Continue with empty appointments array if API fails
+      }
+      
+      // Generate slots based on business hours
+      const slots: any[] = [];
+      const openTime = daySchedule.openTime;
+      const closeTime = daySchedule.closeTime;
+      
+      // Parse open and close times
+      const [openHour, openMinute] = openTime.split(':').map(Number);
+      const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+      
+      // Generate 2-hour slots up to and including the closing time
+      let currentHour = openHour;
+      let currentMinute = openMinute;
+      
+      // Get current time for comparison (only relevant for today)
+      const now = new Date();
+      const isToday = format(selectedDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
+      const currentTimeMinutes = isToday ? now.getHours() * 60 + now.getMinutes() : -1;
+      
+      // Helper function to convert time string to minutes
+      const timeToMinutes = (timeString: string): number => {
+        const [hours, minutes] = timeString.split(':').map(Number);
+        return hours * 60 + minutes;
+      };
+      
+      while (currentHour < closeHour || (currentHour === closeHour && currentMinute <= closeMinute)) {
+        const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+        const slotTimeMinutes = currentHour * 60 + currentMinute;
+        
+        // Check if this time slot conflicts with any existing appointment
+        let isAvailable = true;
+        
+        // Skip past time slots for today
+        if (isToday && slotTimeMinutes <= currentTimeMinutes) {
+          isAvailable = false;
+        }
+        
+        if (dayAppointments.length > 0 && isAvailable) {
+          isAvailable = !dayAppointments.some(appointment => {
+            const appointmentTime = appointment.time;
+            const appointmentTimeMinutes = timeToMinutes(appointmentTime);
+            
+            // Get the duration of the existing appointment
+            const appointmentDuration = appointment.duration || 
+              (services.find(s => 
+                s.name === appointment.service || 
+                s._id === appointment.service || 
+                s.id === appointment.service
+              )?.duration) || 60; // Default to 60 minutes if duration not found
+            
+            // Check if the current slot would conflict with the existing appointment
+            const currentSlotEnd = slotTimeMinutes + totalDuration;
+            const appointmentEnd = appointmentTimeMinutes + appointmentDuration;
+            
+            return (
+              (slotTimeMinutes >= appointmentTimeMinutes && slotTimeMinutes < appointmentEnd) ||
+              (currentSlotEnd > appointmentTimeMinutes && slotTimeMinutes < appointmentTimeMinutes)
+            );
+          });
+        }
+        
+        slots.push({
+          time: timeString,
+          available: isAvailable
         });
-
-      setAvailableSlots(slotsForDate);
-    } catch (err) {
-      console.error('Error loading time slots:', err);
-      setError('Failed to load available time slots');
+        
+        // Add 2 hours (120 minutes)
+        currentMinute += 120;
+        if (currentMinute >= 60) {
+          currentHour += Math.floor(currentMinute / 60);
+          currentMinute = currentMinute % 60;
+        }
+      }
+      
+      setAvailableSlots(slots);
+    } catch (error) {
+      console.error('Error generating time slots:', error);
+      setAvailableSlots([]);
     }
-  };
+  }, [selectedDate, selectedService, businessHours, services]);
+
+  useEffect(() => {
+    if (selectedDate && selectedService) {
+      loadAvailableSlots();
+    }
+  }, [selectedDate, selectedService, loadAvailableSlots]);
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
