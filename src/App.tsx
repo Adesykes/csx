@@ -4,6 +4,7 @@ import AuthGuard from './components/AuthGuard';
 import ClientAuth from './pages/ClientAuth';
 import HomePage from './pages/HomePage';
 import CancelAppointment from './pages/CancelAppointment';
+import MyAppointments from './pages/MyAppointments';
 import ReviewsPage from './pages/ReviewsPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminAppointments from './pages/admin/AdminAppointments';
@@ -22,6 +23,11 @@ function App() {
           <Route path="/booking" element={
             <AuthGuard requireClient={true}>
               <HomePage />
+            </AuthGuard>
+          } />
+          <Route path="/my-appointments" element={
+            <AuthGuard requireClient={true}>
+              <MyAppointments />
             </AuthGuard>
           } />
           <Route path="/cancel" element={<CancelAppointment />} />

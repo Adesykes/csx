@@ -257,6 +257,11 @@ class ApiClient {
     return this.request<Appointment[]>(`/api/appointments/customer?email=${encodeURIComponent(customerEmail)}&phone=${encodeURIComponent(customerPhone)}`);
   }
 
+  async getMyAppointments() {
+    // Get appointments for the currently logged-in client
+    return this.request<Appointment[]>('/api/appointments/my-appointments');
+  }
+
   async cancelAppointment(appointmentId: string) {
     return this.request<{ message: string }>(`/api/appointments/${appointmentId}/cancel`, {
       method: 'PATCH',
