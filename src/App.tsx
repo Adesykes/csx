@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import AuthGuard from './components/AuthGuard';
+import ClientAuth from './pages/ClientAuth';
 import HomePage from './pages/HomePage';
 import CancelAppointment from './pages/CancelAppointment';
 import ReviewsPage from './pages/ReviewsPage';
@@ -18,7 +19,12 @@ function App() {
     <Router>
       <Layout>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<ClientAuth />} />
+          <Route path="/booking" element={
+            <AuthGuard requireClient={true}>
+              <HomePage />
+            </AuthGuard>
+          } />
           <Route path="/cancel" element={<CancelAppointment />} />
           <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/admin" element={<AdminLogin />} />

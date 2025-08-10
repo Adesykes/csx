@@ -107,7 +107,35 @@ class ApiClient {
   async login(email: string, password: string): Promise<AuthResponse> {
     const response = await this.request<AuthResponse>('/api/auth/login', {
       method: 'POST',
+      body: JSON.stringify({ email, password, type: 'admin' }),
+    });
+    
+    if (response.token) {
+      this.token = response.token;
+      localStorage.setItem('authToken', response.token);
+    }
+    
+    return response;
+  }
+
+  async clientLogin(email: string, password: string): Promise<AuthResponse> {
+    const response = await this.request<AuthResponse>('/api/auth/client-login', {
+      method: 'POST',
       body: JSON.stringify({ email, password }),
+    });
+    
+    if (response.token) {
+      this.token = response.token;
+      localStorage.setItem('authToken', response.token);
+    }
+    
+    return response;
+  }
+
+  async clientSignup(name: string, email: string, password: string): Promise<AuthResponse> {
+    const response = await this.request<AuthResponse>('/api/auth/client-signup', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password }),
     });
     
     if (response.token) {

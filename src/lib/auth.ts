@@ -1,5 +1,3 @@
-import { VercelRequest } from '@vercel/node';
-
 export interface JWTPayload {
   userId: string;
   email: string;
@@ -30,5 +28,26 @@ export function isAdmin(): boolean {
     return payload.role === 'admin';
   } catch {
     return false;
+  }
+}
+
+export function isClient(): boolean {
+  const token = getAuthToken();
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1])) as JWTPayload;
+    return payload.role === 'client' || payload.role === 'user';
+  } catch {
+    return false;
+  }
+}
+
+export function getUser(): JWTPayload | null {
+  const token = getAuthToken();
+  if (!token) return null;
+  try {
+    return JSON.parse(atob(token.split('.')[1])) as JWTPayload;
+  } catch {
+    return null;
   }
 }

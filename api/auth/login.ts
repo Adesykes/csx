@@ -21,37 +21,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { email, password } = req.body;
+    const { email, password, type } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Check against environment variables
-    if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const user = {
-      _id: 'admin',
-      email: process.env.ADMIN_EMAIL,
-      role: 'admin'
-    };
-
-    const token = jwt.sign({
-      userId: user._id.toString(),
-      email: user.email,
-      role: user.role || 'user'
-    }, JWT_SECRET, { expiresIn: '24h' });
-    
-    return res.status(200).json({
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role
+    // If this is an admin login request or no type specified (backwards compatibility)
+    if (!type || type === 'admin') {
+      // Check against environment variables for admin
+      if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid credentials' });
       }
-    });
+
+      const user = {
+        _id: 'admin',
+        email: process.env.ADMIN_EMAIL,
+        role: 'admin'
+      };
+
+      const token = jwt.sign({
+        userId: user._id.toString(),
+        email: user.email,
+        role: user.role || 'user'
+      }, JWT_SECRET, { expiresIn: '24h' });
+      
+      return res.status(200).json({
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          role: user.role
+        }
+      });
+    } else {
+      // For non-admin requests, this endpoint doesn't handle them
+      return res.status(400).json({ error: 'Invalid login type for this endpoint' });
+    }
   } catch (error) {
     console.error('Login error:', error);
     return res.status(500).json({ error: 'Internal server error' });

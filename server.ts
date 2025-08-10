@@ -87,8 +87,48 @@ app.get('/ping', (req, res) => {
   });
 });
 
-// Login endpoint
+// Login endpoint (admin)
 app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password, type } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // If this is an admin login request or no type specified (backwards compatibility)
+    if (!type || type === 'admin') {
+      // Check against environment variables for admin
+      if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const token = jwt.sign({
+        userId: 'admin',
+        email: process.env.ADMIN_EMAIL,
+        role: 'admin'
+      }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
+
+      return res.status(200).json({
+        token,
+        user: {
+          id: 'admin',
+          email: process.env.ADMIN_EMAIL,
+          role: 'admin'
+        }
+      });
+    } else {
+      // For non-admin requests, this endpoint doesn't handle them
+      return res.status(400).json({ error: 'Invalid login type for this endpoint' });
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Client login endpoint
+app.post('/api/auth/client-login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -96,27 +136,111 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Check against environment variables
-    if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
+    // Connect to database and find user
+    const db = await getDatabase();
+    const user = await db.collection('users').findOne({ 
+      email: email.toLowerCase(),
+      role: { $ne: 'admin' } // Exclude admin users from client login
+    });
+
+    if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({
-      userId: 'admin',
-      email: process.env.ADMIN_EMAIL,
-      role: 'admin'
-    }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
+    // Check password
+    const bcrypt = await import('bcryptjs');
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
+    // Generate JWT token
+    const token = jwt.sign({
+      userId: user._id.toString(),
+      email: user.email,
+      role: user.role || 'client'
+    }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '7d' }); // Longer expiry for clients
+    
     return res.status(200).json({
       token,
       user: {
-        id: 'admin',
-        email: process.env.ADMIN_EMAIL,
-        role: 'admin'
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role || 'client'
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Client login error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Client signup endpoint
+app.post('/api/auth/client-signup', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+
+    // Connect to database
+    const db = await getDatabase();
+    
+    // Check if user already exists
+    const existingUser = await db.collection('users').findOne({ 
+      email: email.toLowerCase() 
+    });
+    
+    if (existingUser) {
+      return res.status(409).json({ error: 'An account with this email already exists' });
+    }
+
+    // Hash password
+    const bcrypt = await import('bcryptjs');
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create new user
+    const newUser = {
+      name: name.trim(),
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      role: 'client',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const result = await db.collection('users').insertOne(newUser);
+
+    // Generate JWT token
+    const token = jwt.sign({
+      userId: result.insertedId.toString(),
+      email: newUser.email,
+      role: 'client'
+    }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '7d' });
+    
+    return res.status(201).json({
+      token,
+      user: {
+        id: result.insertedId,
+        name: newUser.name,
+        email: newUser.email,
+        role: 'client'
+      }
+    });
+  } catch (error) {
+    console.error('Client signup error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });

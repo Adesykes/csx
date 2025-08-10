@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star } from 'lucide-react';
-import { clearAuthToken } from '../lib/auth';
+import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star, User } from 'lucide-react';
+import { clearAuthToken, isAuthenticated, isAdmin, isClient, getUser } from '../lib/auth';
 import { apiClient } from '../lib/api';
 
 interface LayoutProps {
@@ -15,6 +15,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isAdminLoginPage = location.pathname === '/admin';
   const showAdminNavigation = isAdminRoute && !isAdminLoginPage;
+  
+  // Authentication state
+  const userIsAuthenticated = isAuthenticated();
+  const userIsAdmin = userIsAuthenticated && isAdmin();
+  const userIsClient = userIsAuthenticated && isClient();
+  const currentUser = getUser();
 
   // Track previous route to detect admin -> customer navigation
   const [wasAdminRoute, setWasAdminRoute] = useState(false);
@@ -110,18 +116,53 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <span>Logout</span>
                   </button>
                 </>
-              ) : (
+              ) : userIsClient ? (
                 <>
                   <Link
-                    to="/"
+                    to="/booking"
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      location.pathname === '/'
-                        ? 'bg-blue-100 text-blue-700'
+                      location.pathname === '/booking'
+                        ? 'bg-pink-100 text-pink-700'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
                     Book Appointment
                   </Link>
+                  <Link
+                    to="/reviews"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      location.pathname === '/reviews'
+                        ? 'bg-pink-100 text-pink-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    Reviews
+                  </Link>
+                  <Link
+                    to="/cancel"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      location.pathname === '/cancel'
+                        ? 'bg-red-100 text-red-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    Cancel Appointment
+                  </Link>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm text-gray-700">Welcome, {currentUser?.email}</span>
+                    <button
+                      onClick={() => {
+                        apiClient.logout();
+                      }}
+                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:text-red-900 hover:bg-red-50"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
                   <Link
                     to="/reviews"
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -212,19 +253,57 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <span>Logout</span>
                   </button>
                 </>
-              ) : (
+              ) : userIsClient ? (
                 <>
                   <Link
-                    to="/"
+                    to="/booking"
                     className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                      location.pathname === '/'
-                        ? 'bg-blue-100 text-blue-700'
+                      location.pathname === '/booking'
+                        ? 'bg-pink-100 text-pink-700'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Book Appointment
                   </Link>
+                  <Link
+                    to="/reviews"
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      location.pathname === '/reviews'
+                        ? 'bg-pink-100 text-pink-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Reviews
+                  </Link>
+                  <Link
+                    to="/cancel"
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      location.pathname === '/cancel'
+                        ? 'bg-red-100 text-red-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Cancel Appointment
+                  </Link>
+                  <div className="px-3 py-2 text-sm text-gray-600">
+                    Welcome, {currentUser?.email}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      apiClient.logout();
+                    }}
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-900 hover:bg-red-50 w-full text-left"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span>Logout</span>
+                  </button>
+                </>
+              ) : (
+                <>
                   <Link
                     to="/reviews"
                     className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
