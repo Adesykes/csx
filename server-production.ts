@@ -52,12 +52,27 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Ping endpoint to keep server alive
-app.get('/ping', (req, res) => {
-  res.status(200).json({ 
-    message: 'pong',
-    timestamp: new Date().toISOString()
-  });
+// Ping endpoint to keep server alive and warm up database
+app.get('/ping', async (req, res) => {
+  try {
+    // Warm up database connection
+    const db = await getDatabase();
+    await db.admin().ping();
+    
+    res.status(200).json({ 
+      message: 'pong',
+      timestamp: new Date().toISOString(),
+      database: 'connected'
+    });
+  } catch (error) {
+    console.error('Database ping failed:', error);
+    res.status(200).json({ 
+      message: 'pong',
+      timestamp: new Date().toISOString(),
+      database: 'error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 // Login endpoint
@@ -94,11 +109,27 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Simple in-memory cache for services
+let servicesCache: any[] | null = null;
+let servicesCacheTimestamp = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 // Services endpoints
 app.get('/api/services', async (req, res) => {
   try {
+    // Check if cache is valid
+    const now = Date.now();
+    if (servicesCache && (now - servicesCacheTimestamp) < CACHE_DURATION) {
+      return res.json(servicesCache);
+    }
+
     const db = await getDatabase();
     const services = await db.collection('services').find({}).toArray();
+    
+    // Update cache
+    servicesCache = services;
+    servicesCacheTimestamp = now;
+    
     res.json(services);
   } catch (error) {
     console.error('Error fetching services:', error);
@@ -122,6 +153,9 @@ app.post('/api/services', authMiddleware, async (req, res) => {
       duration: parseInt(duration),
       createdAt: new Date()
     });
+
+    // Invalidate cache
+    servicesCache = null;
 
     res.status(201).json({ 
       id: result.insertedId,
@@ -164,6 +198,9 @@ app.put('/api/services/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Service not found' });
     }
 
+    // Invalidate cache
+    servicesCache = null;
+
     res.json({ message: 'Service updated successfully' });
   } catch (error) {
     console.error('Error updating service:', error);
@@ -185,6 +222,9 @@ app.delete('/api/services/:id', authMiddleware, async (req, res) => {
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: 'Service not found' });
     }
+
+    // Invalidate cache
+    servicesCache = null;
 
     res.json({ message: 'Service deleted successfully' });
   } catch (error) {

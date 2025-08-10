@@ -11,7 +11,7 @@ Prevents your Render backend from sleeping by pinging it every 10 minutes.
 3. **Create New Monitor:**
    - **Monitor Type:** HTTP(s)
    - **Friendly Name:** CSX Backend Keep-Alive
-   - **URL:** `https://api.csxnaillounge.co.uk/ping`
+   - **URL:** `https://csx-nail-lounge-backend.onrender.com/ping`
    - **Monitoring Interval:** 5 minutes
 4. **Save Monitor**
 
@@ -26,7 +26,7 @@ Prevents your Render backend from sleeping by pinging it every 10 minutes.
 1. **Go to:** https://cron-job.org/
 2. **Sign up** for free account
 3. **Create new cronjob:**
-   - **URL:** `https://api.csxnaillounge.co.uk/ping`
+   - **URL:** `https://csx-nail-lounge-backend.onrender.com/ping`
    - **Schedule:** Every 10 minutes
    - **Method:** GET
 
@@ -47,7 +47,7 @@ jobs:
     steps:
       - name: Ping Server
         run: |
-          curl -f https://api.csxnaillounge.co.uk/ping || exit 1
+          curl -f https://csx-nail-lounge-backend.onrender.com/ping || exit 1
 ```
 
 ## Option 4: Simple Node.js Script (Self-Hosted)
@@ -60,7 +60,7 @@ const https = require('https');
 
 const pingServer = () => {
   const options = {
-    hostname: 'api.csxnaillounge.co.uk',
+    hostname: 'csx-nail-lounge-backend.onrender.com',
     path: '/ping',
     method: 'GET'
   };
@@ -93,8 +93,8 @@ console.log('Keep-alive service started...');
 ## 📊 Monitoring Your Endpoints
 
 After deployment, you can monitor:
-- **Health:** `https://api.csxnaillounge.co.uk/health`
-- **Ping:** `https://api.csxnaillounge.co.uk/ping`
+- **Health:** `https://csx-nail-lounge-backend.onrender.com/health`
+- **Ping:** `https://csx-nail-lounge-backend.onrender.com/ping`
 - **Frontend:** `https://csxnaillounge.co.uk`
 
 ## ⚠️ Important Notes
