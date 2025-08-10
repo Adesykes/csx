@@ -18,16 +18,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { id } = req.query;
-    const { appointmentDate, startTime, endTime, serviceId, serviceName, servicePrice } = req.body;
+    const { appointmentDate, startTime, endTime, serviceName, servicePrice, newAppointmentData } = req.body;
     
     console.log('🔄 Change appointment request:', {
       id,
       appointmentDate,
       startTime,
       endTime,
-      serviceId,
       serviceName,
       servicePrice,
+      newAppointmentData,
       fullBody: req.body
     });
     
@@ -103,19 +103,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     );
 
-    // Create a new appointment with the new details
+    // Create a new appointment with the new details - use same logic as new appointments
     const newAppointment = {
       customerName: originalAppointment.customerName,
       customerEmail: originalAppointment.customerEmail,
       customerPhone: originalAppointment.customerPhone,
-      serviceId: serviceId || originalAppointment.serviceId,
-      service: serviceName || originalAppointment.service || 'Service', // Fallback to 'Service' if both are undefined
+      service: serviceName || originalAppointment.service || 'Service', // Use serviceName directly like new appointments
       servicePrice: servicePrice || originalAppointment.servicePrice,
       date: appointmentDate,
       time: startTime,
       endTime: endTime,
       status: 'pending',
       paymentStatus: originalAppointment.paymentStatus,
+      paymentMethod: originalAppointment.paymentMethod,
       paymentIntentId: originalAppointment.paymentIntentId,
       notes: originalAppointment.notes,
       originalAppointmentId: originalAppointment._id, // Reference to original

@@ -115,31 +115,50 @@ const BookingForm: React.FC<BookingFormProps> = ({
       const { apiClient } = await import('../lib/api');
       
       if (isChangingAppointment && appointmentToChange) {
-        // Handle appointment change - call the change API instead of create
-        // Use original service info if no new services selected
-        const useOriginalService = selectedServices.length === 0;
+        // Handle appointment change - use the same logic as new appointments
+        // If no services are selected, use the original appointment's service info
+        const effectiveServices = selectedServices.length > 0 ? selectedServices : [{
+          name: appointmentToChange.currentService || 'Service',
+          price: 0,
+          duration: 0
+        }];
+        
+        const effectiveServiceNames = effectiveServices.map(service => service.name).join(', ');
+        const effectiveTotalPrice = selectedServices.length > 0 ? totalPrice : (appointmentToChange.servicePrice || 0);
         
         console.log('🔄 Change appointment debug:', {
           appointmentToChange,
           selectedServices,
-          useOriginalService,
-          currentService: appointmentToChange.currentService,
-          serviceNames,
-          totalPrice
+          effectiveServices,
+          effectiveServiceNames,
+          originalService: appointmentToChange.currentService
         });
         
-        const changeData = {
+        // Use the same appointmentData structure as new appointments
+        const changeAppointmentData = {
+          customerName: appointmentToChange.customerName,
+          customerEmail: appointmentToChange.customerEmail,
+          customerPhone: appointmentToChange.customerPhone,
+          service: effectiveServiceNames, // Same field as new appointments!
+          servicePrice: effectiveTotalPrice,
+          date: format(selectedDate, 'yyyy-MM-dd'),
+          time: selectedTime,
+          status: 'pending' as const,
+          paymentMethod,
+          paymentStatus: paymentMethod === 'cash' ? 'pending' : 'pending',
+          notes: data.notes || appointmentToChange.notes || ''
+        };
+        
+        console.log('📤 Sending change request with appointment data:', changeAppointmentData);
+        
+        // For now, let's just use the service field directly in the change API call
+        await apiClient.changeAppointment(appointmentToChange.oldAppointmentId, {
           appointmentDate: format(selectedDate, 'yyyy-MM-dd'),
           startTime: selectedTime,
           endTime: calculateEndTime(selectedTime, totalDuration),
-          serviceId: useOriginalService ? undefined : (selectedServices[0]._id || selectedServices[0].id),
-          serviceName: useOriginalService ? appointmentToChange.currentService : serviceNames,
-          servicePrice: useOriginalService ? undefined : totalPrice
-        };
-        
-        console.log('📤 Sending change request:', changeData);
-        
-        await apiClient.changeAppointment(appointmentToChange.oldAppointmentId, changeData);
+          serviceName: effectiveServiceNames, // Use the effective service name
+          servicePrice: effectiveTotalPrice
+        });
         
         // Clear the appointment change data from sessionStorage
         sessionStorage.removeItem('appointmentToChange');
