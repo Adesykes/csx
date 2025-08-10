@@ -57,20 +57,34 @@ const ClientAuth: React.FC = () => {
     }
 
     try {
+      console.log('🔐 Attempting authentication...', { isLogin, email: email.toLowerCase(), apiBaseUrl: window.location.origin });
+      
       if (isLogin) {
-        // Login
-        const response = await apiClient.clientLogin(email, password);
-        console.log('Login successful:', response);
+        // Login - ensure email is lowercase
+        const response = await apiClient.clientLogin(email.toLowerCase(), password);
+        console.log('✅ Login successful:', response);
         navigateAfterAuth();
       } else {
-        // Sign up
-        const response = await apiClient.clientSignup(name, email, password);
-        console.log('Signup successful:', response);
+        // Sign up - ensure email is lowercase
+        const response = await apiClient.clientSignup(name, email.toLowerCase(), password);
+        console.log('✅ Signup successful:', response);
         navigateAfterAuth();
       }
     } catch (error: any) {
-      console.error('Auth error:', error);
-      setError(error.message || `${isLogin ? 'Login' : 'Signup'} failed. Please try again.`);
+      console.error('❌ Auth error:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = error.message || `${isLogin ? 'Login' : 'Signup'} failed. Please try again.`;
+      
+      if (error.message?.includes('fetch')) {
+        errorMessage = 'Connection failed. Please check your internet connection and try again.';
+      } else if (error.message?.includes('credentials')) {
+        errorMessage = isLogin ? 'Invalid email or password. Please try again.' : 'An account with this email already exists.';
+      } else if (error.message?.includes('CORS')) {
+        errorMessage = 'Server configuration issue. Please try again later.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

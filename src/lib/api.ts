@@ -87,6 +87,13 @@ class ApiClient {
       (requestHeaders as Record<string, string>)['Authorization'] = `Bearer ${token}`;
     }
 
+    console.log('🌐 Making API request:', { 
+      url, 
+      method: options.method || 'GET',
+      hasToken: !!token,
+      headers: Object.keys(requestHeaders)
+    });
+
     try {
       const response = await fetch(url, {
         ...options,
@@ -94,8 +101,16 @@ class ApiClient {
         credentials: 'include'
       });
 
+      console.log('🌐 API response:', { 
+        status: response.status, 
+        statusText: response.statusText,
+        ok: response.ok,
+        url: response.url
+      });
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('🌐 API error data:', errorData);
         throw new Error(errorData.error || `API Error: ${response.statusText}`);
       }
 
@@ -123,17 +138,25 @@ class ApiClient {
   }
 
   async clientLogin(email: string, password: string): Promise<AuthResponse> {
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log('🔐 Client login attempt:', { email: normalizedEmail, baseUrl: this.baseUrl });
+    
     const response = await this.request<AuthResponse>('/api/auth', {
       method: 'POST',
-      body: JSON.stringify({ action: 'client-login', email, password }),
+      body: JSON.stringify({ action: 'client-login', email: normalizedEmail, password }),
     });
+    
+    console.log('🔐 Login response received:', { hasToken: !!response.token, hasUser: !!response.user });
     
     if (response.token) {
       this.token = response.token;
       localStorage.setItem('authToken', response.token);
+      console.log('🔐 Token stored in localStorage');
+      
       // Store user information if available
       if (response.user) {
         localStorage.setItem('userInfo', JSON.stringify(response.user));
+        console.log('🔐 User info stored:', response.user);
       }
     }
     
@@ -141,9 +164,12 @@ class ApiClient {
   }
 
   async clientSignup(name: string, email: string, password: string): Promise<AuthResponse> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const trimmedName = name.trim();
+    
     const response = await this.request<AuthResponse>('/api/auth', {
       method: 'POST',
-      body: JSON.stringify({ action: 'client-signup', name, email, password }),
+      body: JSON.stringify({ action: 'client-signup', name: trimmedName, email: normalizedEmail, password }),
     });
     
     if (response.token) {
