@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
-import { getDatabase } from '../lib/mongodb';
+import { getDatabase } from '../lib/mongodb-simple';
 import { ObjectId } from 'mongodb';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {

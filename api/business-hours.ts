@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getDatabase } from '../lib/mongodb';
+import { getDatabase } from '../lib/mongodb-simple';
 import { verifyToken } from '../lib/auth';
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

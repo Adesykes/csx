@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
-import { getDatabase } from './lib/mongodb.js';
+import { getDatabase } from './lib/mongodb-simple.js';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
 import bcrypt from 'bcryptjs';

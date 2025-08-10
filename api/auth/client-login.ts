@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getDatabase } from '../../lib/mongodb';
+import { getDatabase } from '../../lib/mongodb-simple';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
