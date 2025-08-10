@@ -59,13 +59,26 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
     try {
       const servicesData = await apiClient.getServices();
       console.log('Loaded services:', servicesData);
-      setServices(servicesData.filter(service => service.active));
+      const activeServices = servicesData.filter(service => service.active);
+      setServices(activeServices);
       
-      // Find and set the current service
-      const currentService = servicesData.find(s => s._id === appointment.serviceId || s.name === appointment.serviceName);
+      // Find and set the current service - try multiple matching strategies
+      let currentService = activeServices.find(s => s._id === appointment.serviceId);
+      if (!currentService) {
+        currentService = activeServices.find(s => s.id === appointment.serviceId);
+      }
+      if (!currentService) {
+        currentService = activeServices.find(s => s.name === appointment.serviceName);
+      }
+      
       console.log('Current service found:', currentService);
+      console.log('Looking for serviceId:', appointment.serviceId, 'serviceName:', appointment.serviceName);
+      
       if (currentService) {
         setSelectedService(currentService);
+      } else {
+        // If no service found, don't pre-select anything but allow user to choose
+        console.log('No matching service found, user will need to select manually');
       }
     } catch (err) {
       console.error('Error loading services:', err);
@@ -246,25 +259,28 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
       {/* Service Selection */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Select Service (optional - keep current service if unchanged)
+          Service Selection
         </label>
         <select
-          value={selectedService?._id || ''}
+          value={selectedService?._id || selectedService?.id || ''}
           onChange={(e) => {
             console.log('Service selection changed:', e.target.value);
-            const service = services.find(s => s._id === e.target.value);
+            const service = services.find(s => s._id === e.target.value || s.id === e.target.value);
             console.log('Found service:', service);
             if (service) handleServiceChange(service);
           }}
           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">Select a service</option>
+          <option value="">Choose a service</option>
           {services.map((service) => (
-            <option key={service._id} value={service._id}>
+            <option key={service._id || service.id} value={service._id || service.id}>
               {service.name} - £{service.price} ({service.duration}min)
             </option>
           ))}
         </select>
+        <p className="mt-1 text-sm text-gray-500">
+          Select the service for your new appointment
+        </p>
         <div className="mt-2 text-sm text-gray-500">
           Debug: {services.length} services loaded, selected: {selectedService?.name || 'None'}
         </div>
