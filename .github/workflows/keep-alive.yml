@@ -1,0 +1,33 @@
+name: Keep Server Alive
+
+on:
+  schedule:
+    # Run every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping-server:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping Backend Server
+        run: |
+          echo "Pinging server at $(date)"
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://csx-nail-lounge-backend.onrender.com/ping)
+          if [ $response -eq 200 ]; then
+            echo "✅ Server is alive (HTTP $response)"
+          else
+            echo "❌ Server ping failed (HTTP $response)"
+            exit 1
+          fi
+          
+      - name: Warm up Services Endpoint
+        run: |
+          echo "Warming up services endpoint"
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://csx-nail-lounge-backend.onrender.com/api/services)
+          if [ $response -eq 200 ]; then
+            echo "✅ Services endpoint warmed up (HTTP $response)"
+          else
+            echo "⚠️  Services endpoint warning (HTTP $response) - continuing anyway"
+          fi
