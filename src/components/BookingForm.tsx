@@ -21,6 +21,8 @@ interface BookingFormProps {
   onComplete: () => void;
   onBack?: () => void;
   isLoading?: boolean;
+  appointmentToChange?: any;
+  isChangingAppointment?: boolean;
 }
 
 const BookingForm: React.FC<BookingFormProps> = ({ 
@@ -30,12 +32,30 @@ const BookingForm: React.FC<BookingFormProps> = ({
   selectedTime,
   onComplete,
   onBack,
-  isLoading = false
+  isLoading = false,
+  appointmentToChange,
+  isChangingAppointment = false
 }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<BookingFormData>();
+  const { register, handleSubmit, formState: { errors } } = useForm<BookingFormData>({
+    defaultValues: isChangingAppointment && appointmentToChange ? {
+      customerName: appointmentToChange.customerName,
+      customerEmail: appointmentToChange.customerEmail,
+      customerPhone: appointmentToChange.customerPhone,
+      notes: ''
+    } : {}
+  });
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  
+  // Helper function to calculate end time
+  const calculateEndTime = (startTime: string, durationMinutes: number): string => {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const startDate = new Date();
+    startDate.setHours(hours, minutes);
+    startDate.setMinutes(startDate.getMinutes() + durationMinutes);
+    return startDate.toTimeString().slice(0, 5);
+  };
   
   const handleFormSubmit = async (data: BookingFormData) => {
     setSubmitting(true);
@@ -93,7 +113,27 @@ const BookingForm: React.FC<BookingFormProps> = ({
       
       // Import the apiClient
       const { apiClient } = await import('../lib/api');
-      await apiClient.createAppointment(appointmentData);
+      
+      if (isChangingAppointment && appointmentToChange) {
+        // Handle appointment change - call the change API instead of create
+        await apiClient.changeAppointment(appointmentToChange.oldAppointmentId, {
+          appointmentDate: format(selectedDate, 'yyyy-MM-dd'),
+          startTime: selectedTime,
+          endTime: calculateEndTime(selectedTime, totalDuration),
+          serviceId: selectedServices[0]._id || selectedServices[0].id,
+          serviceName: serviceNames,
+          servicePrice: totalPrice
+        });
+        
+        // Clear the appointment change data from sessionStorage
+        sessionStorage.removeItem('appointmentToChange');
+        
+        console.log('Appointment changed successfully');
+      } else {
+        // Normal appointment creation
+        await apiClient.createAppointment(appointmentData);
+        console.log('New appointment created');
+      }
       
       // Send confirmation email
       try {

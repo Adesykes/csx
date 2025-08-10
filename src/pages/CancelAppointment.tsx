@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { Search, Calendar, Clock, User, Phone, Mail, X, Edit } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { apiClient, Appointment } from '../lib/api';
-import ChangeAppointment from '../components/ChangeAppointment';
 
 interface SearchForm {
   email: string;
@@ -16,7 +15,6 @@ const CancelAppointment: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [searchPerformed, setSearchPerformed] = useState(false);
-  const [changingAppointment, setChangingAppointment] = useState<Appointment | null>(null);
 
   const { register, handleSubmit, formState: { errors }, watch } = useForm<SearchForm>();
 
@@ -103,29 +101,22 @@ const CancelAppointment: React.FC = () => {
   };
 
   const handleChangeAppointment = (appointment: Appointment) => {
-    setChangingAppointment(appointment);
-    setError(null);
-    setSuccess(null);
-  };
-
-  const handleAppointmentChanged = () => {
-    console.log('📅 Appointment changed - refreshing data...');
-    setChangingAppointment(null);
-    setSuccess('Appointment changed successfully! A confirmation email has been sent.');
+    // Store the appointment ID to be replaced and customer details
+    const changeData = {
+      oldAppointmentId: appointment._id,
+      customerName: appointment.customerName,
+      customerEmail: appointment.customerEmail,
+      customerPhone: appointment.customerPhone,
+      currentService: appointment.service,
+      currentDate: appointment.date,
+      currentTime: appointment.time
+    };
     
-    // Refresh the appointments list
-    const currentForm = { email: email || '', phone: phone || '' };
-    console.log('📞 Refreshing with form data:', currentForm);
-    if (currentForm.email || currentForm.phone) {
-      onSearch(currentForm);
-    }
+    // Store in sessionStorage so it persists across navigation
+    sessionStorage.setItem('appointmentToChange', JSON.stringify(changeData));
     
-    // Clear success message after 5 seconds
-    setTimeout(() => setSuccess(null), 5000);
-  };
-
-  const handleCloseChangeForm = () => {
-    setChangingAppointment(null);
+    // Navigate to homepage with a change indicator
+    window.location.href = '/?changing=true';
   };
 
   const formatDate = (dateStr: string) => {
@@ -150,38 +141,12 @@ const CancelAppointment: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Show Change Appointment Form */}
-        {changingAppointment && (
-          <div className="mb-8">
-            <ChangeAppointment
-              appointment={{
-                _id: changingAppointment._id,
-                customerName: changingAppointment.customerName,
-                customerEmail: changingAppointment.customerEmail,
-                serviceName: changingAppointment.service,
-                serviceId: changingAppointment.service, // Use service name as ID fallback
-                servicePrice: 0, // Will be loaded from service selection
-                date: changingAppointment.date,
-                time: changingAppointment.time,
-                endTime: changingAppointment.time, // Use same time as fallback
-                status: changingAppointment.status
-              }}
-              onAppointmentChanged={handleAppointmentChanged}
-              onCancel={handleCloseChangeForm}
-            />
-          </div>
-        )}
-
-        {/* Hide the main form when changing appointment */}
-        {!changingAppointment && (
-          <>
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Appointments</h1>
-              <p className="text-gray-600">
-                Enter your email or phone number to find your appointments. You can change or cancel them here.
-              </p>
-            </div>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Appointments</h1>
+          <p className="text-gray-600">
+            Enter your email or phone number to find your appointments. You can change or cancel them here.
+          </p>
+        </div>
 
         {/* Search Form */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -318,16 +283,18 @@ const CancelAppointment: React.FC = () => {
                     <button
                       onClick={() => handleChangeAppointment(appointment)}
                       disabled={loading}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                     >
-                      Change
+                      <Edit className="h-4 w-4" />
+                      <span>Change</span>
                     </button>
                     <button
                       onClick={() => handleCancelAppointment(appointment._id)}
                       disabled={loading}
-                      className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                     >
-                      {loading ? 'Cancelling...' : 'Cancel'}
+                      <X className="h-4 w-4" />
+                      <span>{loading ? 'Cancelling...' : 'Cancel'}</span>
                     </button>
                   </div>
                 </div>
@@ -351,14 +318,11 @@ const CancelAppointment: React.FC = () => {
         <div className="mt-8 text-center text-sm text-gray-600">
           <p>
             Need help? Contact us directly at{' '}
-
             <a href="mailto:cxsnaillounge1@gmail.com" className="text-blue-600 hover:text-blue-700">
               cxsnaillounge1@gmail.com
             </a>
           </p>
         </div>
-        </>
-        )}
       </div>
     </div>
   );

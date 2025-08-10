@@ -9,7 +9,7 @@ import ServiceCardSkeleton from '../components/ServiceCardSkeleton';
 import Calendar from '../components/Calendar';
 import TimeSlotPicker from '../components/TimeSlotPicker';
 import BookingForm from '../components/BookingForm';
-import { CheckCircle, ChevronLeft } from 'lucide-react';
+import { CheckCircle, ChevronLeft, Edit } from 'lucide-react';
 
 interface DaySchedule {
   day: string;
@@ -37,6 +37,10 @@ const HomePage = (): JSX.Element => {
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [isLoading] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  
+  // Appointment change state
+  const [isChangingAppointment, setIsChangingAppointment] = useState(false);
+  const [appointmentToChange, setAppointmentToChange] = useState<any>(null);
 
   // Remove early return for error, move error rendering into main return below
 
@@ -242,13 +246,19 @@ const HomePage = (): JSX.Element => {
   }, [selectedDate, selectedServices, businessHours, generateTimeSlots]);
 
   const resetBooking = useCallback(() => {
-    setCurrentStep('service');
-    setSelectedServices([]);
-    setSelectedDate(null);
-    setSelectedTime(null);
-    setBookingSuccess(false);
-    setAvailableSlots([]); // Clear available slots when resetting
-  }, []);
+    if (isChangingAppointment) {
+      // If changing appointment, redirect back to manage appointments page
+      window.location.href = '/cancel-appointment';
+    } else {
+      // Normal reset for new booking
+      setCurrentStep('service');
+      setSelectedServices([]);
+      setSelectedDate(null);
+      setSelectedTime(null);
+      setBookingSuccess(false);
+      setAvailableSlots([]); // Clear available slots when resetting
+    }
+  }, [isChangingAppointment]);
 
   // Load services and business hours on mount
   useEffect(() => {
@@ -278,13 +288,39 @@ const HomePage = (): JSX.Element => {
   }, []);
 
   // Reset booking flow when navigating to homepage (ensures fresh start when clicking "Book Appointment")
+  // OR detect appointment change mode
   useEffect(() => {
-    setCurrentStep('service');
-    setSelectedServices([]);
-    setSelectedDate(null);
-    setSelectedTime(null);
-    setBookingSuccess(false);
-  }, [location.pathname]); // Reset whenever the path changes to homepage
+    const urlParams = new URLSearchParams(location.search);
+    const isChanging = urlParams.get('changing') === 'true';
+    
+    if (isChanging) {
+      // Check for appointment change data in sessionStorage
+      const changeData = sessionStorage.getItem('appointmentToChange');
+      if (changeData) {
+        const appointmentData = JSON.parse(changeData);
+        setIsChangingAppointment(true);
+        setAppointmentToChange(appointmentData);
+        
+        // Pre-populate customer details and show a message
+        setCurrentStep('service');
+        setSelectedServices([]);
+        setSelectedDate(null);
+        setSelectedTime(null);
+        setBookingSuccess(false);
+        
+        console.log('🔄 Appointment change mode activated:', appointmentData);
+      }
+    } else {
+      // Normal reset for fresh booking
+      setCurrentStep('service');
+      setSelectedServices([]);
+      setSelectedDate(null);
+      setSelectedTime(null);
+      setBookingSuccess(false);
+      setIsChangingAppointment(false);
+      setAppointmentToChange(null);
+    }
+  }, [location.pathname, location.search]); // Reset whenever the path or search params change
 
   // Generate available dates (next 30 days, excluding closed days and closure dates)
   useEffect(() => {
@@ -321,9 +357,29 @@ const HomePage = (): JSX.Element => {
       <div className="max-w-4xl mx-auto p-4 sm:p-6">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Book Your Appointment</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            {isChangingAppointment ? 'Change Your Appointment' : 'Book Your Appointment'}
+          </h1>
           <p className="text-gray-600 text-sm sm:text-base">Choose your service and preferred time</p>
         </div>
+
+        {/* Appointment Change Banner */}
+        {isChangingAppointment && appointmentToChange && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center space-x-2 mb-2">
+              <Edit className="h-5 w-5 text-blue-600" />
+              <h3 className="font-semibold text-blue-900">Changing Appointment</h3>
+            </div>
+            <p className="text-blue-800 text-sm">
+              You are changing your appointment for <strong>{appointmentToChange.currentService}</strong> 
+              {' '}on <strong>{format(new Date(appointmentToChange.currentDate), 'EEEE, MMMM do, yyyy')}</strong>
+              {' '}at <strong>{appointmentToChange.currentTime}</strong>.
+            </p>
+            <p className="text-blue-700 text-xs mt-2">
+              Select your new services, date, and time below. Your original appointment will be automatically cancelled.
+            </p>
+          </div>
+        )}
 
         {/* Progress Steps */}
         <div className="flex justify-center mb-6 sm:mb-8 overflow-x-auto">
@@ -566,6 +622,8 @@ const HomePage = (): JSX.Element => {
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
                 onComplete={handleBookingComplete}
+                appointmentToChange={appointmentToChange}
+                isChangingAppointment={isChangingAppointment}
                 onBack={() => {
                   setCurrentStep('service');
                   // Clear date and time when going back to services
@@ -581,16 +639,21 @@ const HomePage = (): JSX.Element => {
           {currentStep === 'confirmation' && bookingSuccess && (
             <div className="text-center py-8">
               <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Booking Confirmed!</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {isChangingAppointment ? 'Appointment Changed!' : 'Booking Confirmed!'}
+              </h2>
               <p className="text-gray-600 mb-6">
-                Your appointment has been successfully booked. You will receive a confirmation email shortly.
+                {isChangingAppointment 
+                  ? 'Your appointment has been successfully changed. You will receive a confirmation email shortly.'
+                  : 'Your appointment has been successfully booked. You will receive a confirmation email shortly.'
+                }
               </p>
               <div className="flex justify-center">
                 <button
                   onClick={resetBooking}
                   className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
                 >
-                  Book Another Appointment
+                  {isChangingAppointment ? 'Done' : 'Book Another Appointment'}
                 </button>
               </div>
             </div>
