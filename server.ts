@@ -14,14 +14,41 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Enable CORS and JSON parsing
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? true // Allow all origins in production for testing - you can restrict this later
-    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:5178'],
+const corsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = process.env.NODE_ENV === 'production' 
+      ? [
+          'https://www.csxnaillounge.co.uk',
+          'https://csxnaillounge.co.uk',
+          'https://csx-nail-lounge.vercel.app'
+        ]
+      : [
+          'http://localhost:5173',
+          'http://localhost:5174', 
+          'http://localhost:5175',
+          'http://localhost:5176',
+          'http://localhost:5177',
+          'http://localhost:5178'
+        ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -808,6 +835,17 @@ app.get('/api/revenue', authMiddleware, async (req, res) => {
     res.json(processedData);
   } catch (error) {
     console.error('Error fetching revenue:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Simple reviews endpoint for testing
+app.get('/api/reviews', async (req, res) => {
+  try {
+    console.log('Reviews endpoint hit');
+    res.json({ message: 'Reviews endpoint working', reviews: [], timestamp: new Date().toISOString() });
+  } catch (error) {
+    console.error('Error in reviews endpoint:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
