@@ -128,7 +128,7 @@ const ClientAuth: React.FC = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span className="text-gray-700">Manage Appointments</span>
+                <span className="text-gray-700">Secure Payment</span>
               </div>
             </div>
             <p className="text-center text-xs text-gray-600 mt-3">
