@@ -177,16 +177,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     Reviews
                   </Link>
                   <Link
-                    to="/cancel"
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      location.pathname === '/cancel'
-                        ? 'bg-red-100 text-red-700'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                  >
-                    Manage Appointments
-                  </Link>
-                  <Link
                     to="/admin"
                     className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                   >
@@ -317,17 +307,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Reviews
-                  </Link>
-                  <Link
-                    to="/cancel"
-                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                      location.pathname === '/cancel'
-                        ? 'bg-red-100 text-red-700'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Manage Appointments
                   </Link>
                   <Link
                     to="/admin"
