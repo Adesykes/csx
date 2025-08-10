@@ -196,6 +196,24 @@ class ApiClient {
     });
   }
 
+  async changeAppointment(appointmentId: string, newAppointmentData: {
+    appointmentDate: string;
+    startTime: string;
+    endTime: string;
+    serviceId?: string;
+    serviceName?: string;
+    servicePrice?: number;
+  }) {
+    return this.request<{ 
+      message: string; 
+      newAppointment: Appointment;
+      cancelledAppointment: Appointment;
+    }>(`/api/appointments/${appointmentId}/change`, {
+      method: 'PATCH',
+      body: JSON.stringify(newAppointmentData),
+    });
+  }
+
   async deleteAppointment(appointmentId: string) {
     return this.request<{ message: string }>(`/api/appointments/${appointmentId}`, {
       method: 'DELETE',

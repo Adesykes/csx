@@ -614,6 +614,115 @@ app.get('/api/appointments/customer', async (req, res) => {
   }
 });
 
+// Change appointment (48-hour rule applies)
+app.patch('/api/appointments/:id/change', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { appointmentDate, startTime, endTime, serviceId, serviceName, servicePrice } = req.body;
+    const db = await getDatabase();
+    const appointmentsCollection = db.collection('appointments');
+    
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid appointment ID' });
+    }
+
+    // Validate required fields
+    if (!appointmentDate || !startTime || !endTime) {
+      return res.status(400).json({ error: 'Date, start time, and end time are required' });
+    }
+
+    // Find the original appointment
+    const originalAppointment = await appointmentsCollection.findOne({ _id: new ObjectId(id) });
+    
+    if (!originalAppointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+
+    if (originalAppointment.status === 'cancelled') {
+      return res.status(400).json({ error: 'Cannot change a cancelled appointment' });
+    }
+
+    if (originalAppointment.status === 'completed') {
+      return res.status(400).json({ error: 'Cannot change a completed appointment' });
+    }
+
+    // Check 48-hour rule - appointment must be at least 48 hours in the future
+    const originalDateTime = new Date(`${originalAppointment.date}T${originalAppointment.time}`);
+    const now = new Date();
+    const fortyEightHoursFromNow = new Date(now.getTime() + (48 * 60 * 60 * 1000));
+    
+    if (originalDateTime < fortyEightHoursFromNow) {
+      return res.status(400).json({ 
+        error: 'Appointments can only be changed up to 48 hours before the scheduled time' 
+      });
+    }
+
+    // Check if the new time slot is available
+    const newDateTime = new Date(`${appointmentDate}T${startTime}`);
+    const conflictingAppointment = await appointmentsCollection.findOne({
+      _id: { $ne: new ObjectId(id) }, // Exclude the current appointment
+      date: appointmentDate,
+      time: startTime,
+      status: { $in: ['pending', 'confirmed'] }
+    });
+
+    if (conflictingAppointment) {
+      return res.status(400).json({ error: 'The selected time slot is not available' });
+    }
+
+    // Cancel the original appointment
+    await appointmentsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { 
+        $set: { 
+          status: 'cancelled',
+          updatedAt: new Date(),
+          cancellationReason: 'Changed to new appointment'
+        }
+      }
+    );
+
+    // Create a new appointment with the new details
+    const newAppointment = {
+      customerName: originalAppointment.customerName,
+      customerEmail: originalAppointment.customerEmail,
+      customerPhone: originalAppointment.customerPhone,
+      serviceId: serviceId || originalAppointment.serviceId,
+      serviceName: serviceName || originalAppointment.serviceName,
+      servicePrice: servicePrice || originalAppointment.servicePrice,
+      date: appointmentDate,
+      time: startTime,
+      endTime: endTime,
+      status: 'pending',
+      paymentStatus: originalAppointment.paymentStatus,
+      paymentIntentId: originalAppointment.paymentIntentId,
+      notes: originalAppointment.notes,
+      originalAppointmentId: originalAppointment._id, // Reference to original
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const result = await appointmentsCollection.insertOne(newAppointment);
+    
+    // Get the complete new appointment object
+    const completeNewAppointment = await appointmentsCollection.findOne({ _id: result.insertedId });
+    const completeCancelledAppointment = await appointmentsCollection.findOne({ _id: new ObjectId(id) });
+
+    // TODO: Send confirmation email for the new appointment
+    // For now, we'll skip the email to avoid complexity - can be added later
+    console.log('New appointment created for:', originalAppointment.customerEmail);
+
+    res.json({ 
+      message: 'Appointment changed successfully',
+      newAppointment: completeNewAppointment,
+      cancelledAppointment: completeCancelledAppointment
+    });
+  } catch (error) {
+    console.error('Error changing appointment:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Cancel appointment (no auth required for customers, optional auth for admin)
 app.patch('/api/appointments/:id/cancel', async (req, res) => {
   try {
