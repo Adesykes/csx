@@ -248,7 +248,7 @@ const HomePage = (): JSX.Element => {
   const resetBooking = useCallback(() => {
     if (isChangingAppointment) {
       // If changing appointment, redirect back to manage appointments page
-      window.location.href = '/cancel-appointment';
+      window.location.href = '/cancel';
     } else {
       // Normal reset for new booking
       setCurrentStep('service');

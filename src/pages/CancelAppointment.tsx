@@ -115,8 +115,8 @@ const CancelAppointment: React.FC = () => {
     // Store in sessionStorage so it persists across navigation
     sessionStorage.setItem('appointmentToChange', JSON.stringify(changeData));
     
-    // Navigate to homepage with a change indicator
-    window.location.href = '/?changing=true';
+    // Navigate to booking page with a change indicator
+    window.location.href = '/booking?changing=true';
   };
 
   const formatDate = (dateStr: string) => {

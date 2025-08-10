@@ -76,6 +76,16 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, requireAdmin = false, r
 
   // If client access is required but user is not authenticated
   if (requireClient && !authenticated) {
+    // Check if this is an appointment change flow
+    const urlParams = new URLSearchParams(location.search);
+    const isChangingAppointment = urlParams.get('changing') === 'true';
+    const hasChangeData = sessionStorage.getItem('appointmentToChange');
+    
+    if (isChangingAppointment && hasChangeData) {
+      // Store a flag to resume appointment change after login
+      sessionStorage.setItem('resumeAppointmentChange', 'true');
+    }
+    
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 

@@ -16,10 +16,26 @@ const ClientAuth: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Helper function to navigate after authentication
+  const navigateAfterAuth = () => {
+    // Check if user was trying to change an appointment
+    const shouldResumeChange = sessionStorage.getItem('resumeAppointmentChange');
+    const hasChangeData = sessionStorage.getItem('appointmentToChange');
+    
+    if (shouldResumeChange === 'true' && hasChangeData) {
+      // Remove the resume flag and navigate to booking with change parameter
+      sessionStorage.removeItem('resumeAppointmentChange');
+      navigate('/booking?changing=true');
+    } else {
+      // Normal navigation to booking page
+      navigate('/booking');
+    }
+  };
+
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated()) {
-      navigate('/booking');
+      navigateAfterAuth();
     }
   }, [navigate]);
 
@@ -45,12 +61,12 @@ const ClientAuth: React.FC = () => {
         // Login
         const response = await apiClient.clientLogin(email, password);
         console.log('Login successful:', response);
-        navigate('/booking');
+        navigateAfterAuth();
       } else {
         // Sign up
         const response = await apiClient.clientSignup(name, email, password);
         console.log('Signup successful:', response);
-        navigate('/booking');
+        navigateAfterAuth();
       }
     } catch (error: any) {
       console.error('Auth error:', error);
@@ -63,6 +79,16 @@ const ClientAuth: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
+        {/* Appointment Change Banner - only show if resuming appointment change */}
+        {sessionStorage.getItem('resumeAppointmentChange') === 'true' && sessionStorage.getItem('appointmentToChange') && (
+          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-4 text-white text-center border-2 border-blue-300">
+            <div className="text-sm font-medium">🔄 Changing Your Appointment</div>
+            <div className="text-xs opacity-90 mt-1">
+              Please sign in to complete your appointment change
+            </div>
+          </div>
+        )}
+        
         {/* Booking Access Banner */}
         <div className="bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg p-4 text-white text-center">
           <div className="text-sm font-medium">🎯 Booking System Access Required</div>
