@@ -270,7 +270,8 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
     setError(null);
 
     try {
-      const dateString = selectedDate.toISOString().split('T')[0];
+      // Use date-fns format for timezone-safe date formatting (same as HomePage)
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
       const startTime = selectedTime;
       
       // Calculate end time based on service duration
