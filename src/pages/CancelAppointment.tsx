@@ -48,11 +48,17 @@ const CancelAppointment: React.FC = () => {
         normalizedPhone
       );
       
+      console.log('🔍 Found appointments from API:', foundAppointments);
+      console.log('📊 Found appointments count:', foundAppointments.length);
+      
       // For testing: show all found appointments, let server handle business rules
       const cancellableAppointments = foundAppointments.filter(apt => {
         // Only filter out already cancelled or completed appointments
         return apt.status !== 'cancelled' && apt.status !== 'completed';
       });
+
+      console.log('✅ Active appointments after filtering:', cancellableAppointments);
+      console.log('📈 Active appointments count:', cancellableAppointments.length);
 
       setAppointments(cancellableAppointments);
       
@@ -103,11 +109,13 @@ const CancelAppointment: React.FC = () => {
   };
 
   const handleAppointmentChanged = () => {
+    console.log('📅 Appointment changed - refreshing data...');
     setChangingAppointment(null);
     setSuccess('Appointment changed successfully! A confirmation email has been sent.');
     
     // Refresh the appointments list
     const currentForm = { email: email || '', phone: phone || '' };
+    console.log('📞 Refreshing with form data:', currentForm);
     if (currentForm.email || currentForm.phone) {
       onSearch(currentForm);
     }
