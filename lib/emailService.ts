@@ -13,15 +13,20 @@ interface BookingDetails {
 }
 
 export class EmailService {
-  private static resend = new Resend(process.env.RESEND_API_KEY);
+  private static resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
   static async sendBookingConfirmation(booking: BookingDetails): Promise<boolean> {
     try {
+      if (!this.resend) {
+        console.log('Email service not configured - skipping email send');
+        return false;
+      }
+      
       const emailHtml = this.generateBookingEmailTemplate(booking);
       const emailText = this.generateBookingEmailText(booking);
 
       // Send to actual customer email address
-      const { data, error } = await this.resend.emails.send({
+      const { data, error } = await this.resend!.emails.send({
         from: 'CXS Booking System <bookings@csxnaillounge.co.uk>',
         to: [booking.customerEmail],
         subject: `Booking Confirmation - ${booking.date} at ${booking.time}`,
@@ -44,9 +49,14 @@ export class EmailService {
 
   static async sendAdminNotification(booking: BookingDetails): Promise<boolean> {
     try {
+      if (!this.resend) {
+        console.log('Email service not configured - skipping admin notification');
+        return false;
+      }
+      
       const emailHtml = this.generateAdminEmailTemplate(booking);
 
-      const { data, error } = await this.resend.emails.send({
+      const { data, error } = await this.resend!.emails.send({
         from: 'CXS Booking System <admin@csxnaillounge.co.uk>',
         to: ['charliesykes16@outlook.com'], // Admin notifications go to Charlie's email
         subject: `New Booking - ${booking.customerName} on ${booking.date}`,

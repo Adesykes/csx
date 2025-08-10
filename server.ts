@@ -88,6 +88,130 @@ app.get('/ping', (req, res) => {
   });
 });
 
+// Consolidated auth endpoint (matching production setup)
+app.post('/api/auth', async (req, res) => {
+  try {
+    const { action, email, password, name, type } = req.body;
+
+    if (!action) {
+      return res.status(400).json({ error: 'Action is required' });
+    }
+
+    const db = await getDatabase();
+    const usersCollection = db.collection('users');
+
+    switch (action) {
+      case 'admin-login':
+        if (!email || !password) {
+          return res.status(400).json({ error: 'Email and password are required' });
+        }
+
+        const adminUser = await usersCollection.findOne({ email, role: 'admin' });
+        if (!adminUser) {
+          return res.status(401).json({ error: 'Invalid admin credentials' });
+        }
+
+        const adminPasswordValid = await bcrypt.compare(password, adminUser.password);
+        if (!adminPasswordValid) {
+          return res.status(401).json({ error: 'Invalid admin credentials' });
+        }
+
+        const adminToken = jwt.sign(
+          { userId: adminUser._id, email: adminUser.email, role: adminUser.role },
+          process.env.JWT_SECRET || 'default_secret',
+          { expiresIn: '24h' }
+        );
+
+        return res.json({
+          token: adminToken,
+          user: {
+            id: adminUser._id,
+            email: adminUser.email,
+            name: adminUser.name,
+            role: adminUser.role
+          }
+        });
+
+      case 'client-login':
+        if (!email || !password) {
+          return res.status(400).json({ error: 'Email and password are required' });
+        }
+
+        const clientUser = await usersCollection.findOne({ email, role: 'client' });
+        if (!clientUser) {
+          return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const clientPasswordValid = await bcrypt.compare(password, clientUser.password);
+        if (!clientPasswordValid) {
+          return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const clientToken = jwt.sign(
+          { userId: clientUser._id, email: clientUser.email, role: clientUser.role },
+          process.env.JWT_SECRET || 'default_secret',
+          { expiresIn: '7d' }
+        );
+
+        return res.json({
+          token: clientToken,
+          user: {
+            id: clientUser._id,
+            email: clientUser.email,
+            name: clientUser.name,
+            role: clientUser.role
+          }
+        });
+
+      case 'client-signup':
+        if (!name || !email || !password) {
+          return res.status(400).json({ error: 'Name, email, and password are required' });
+        }
+
+        if (password.length < 6) {
+          return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        }
+
+        const existingUser = await usersCollection.findOne({ email });
+        if (existingUser) {
+          return res.status(400).json({ error: 'User with this email already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = {
+          name,
+          email,
+          password: hashedPassword,
+          role: 'client',
+          createdAt: new Date()
+        };
+
+        const result = await usersCollection.insertOne(newUser);
+        const signupToken = jwt.sign(
+          { userId: result.insertedId, email, role: 'client' },
+          process.env.JWT_SECRET || 'default_secret',
+          { expiresIn: '7d' }
+        );
+
+        return res.json({
+          token: signupToken,
+          user: {
+            id: result.insertedId,
+            email,
+            name,
+            role: 'client'
+          }
+        });
+
+      default:
+        return res.status(400).json({ error: 'Invalid action' });
+    }
+  } catch (error) {
+    console.error('Auth error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Login endpoint (admin)
 app.post('/api/auth/login', async (req, res) => {
   try {
