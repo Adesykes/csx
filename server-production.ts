@@ -110,10 +110,11 @@ const authMiddleware = async (req: express.Request, res: express.Response, next:
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
-    version: '1.0.1', // Added version to trigger redeploy
+    version: '1.0.2', // Updated version to test deployment
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    reviewsTest: 'Reviews should work now' // Test field
   });
 });
 
