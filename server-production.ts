@@ -680,6 +680,134 @@ app.get('/api/revenue', authMiddleware, async (req, res) => {
   }
 });
 
+// Reviews endpoints
+// Get all reviews (public - only returns approved reviews for public view)
+app.get('/api/reviews', async (req, res) => {
+  try {
+    const db = await getDatabase();
+    const reviewsCollection = db.collection('reviews');
+    
+    // For admin requests, return all reviews, for public only approved
+    const isAdminRequest = req.headers.authorization;
+    const filter = isAdminRequest ? {} : { status: 'approved' };
+    
+    const reviews = await reviewsCollection
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .toArray();
+      
+    // Convert MongoDB _id to id for frontend compatibility
+    const formattedReviews = reviews.map(review => ({
+      ...review,
+      _id: review._id.toString(),
+      id: review._id.toString()
+    }));
+    
+    res.json(formattedReviews);
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create a new review (public endpoint)
+app.post('/api/reviews', async (req, res) => {
+  try {
+    const { customerName, rating, comment, service } = req.body;
+    
+    // Validate required fields
+    if (!customerName || !rating || !comment) {
+      return res.status(400).json({ error: 'Customer name, rating, and comment are required' });
+    }
+    
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+    }
+    
+    const db = await getDatabase();
+    const reviewsCollection = db.collection('reviews');
+    
+    const newReview = {
+      customerName: customerName.trim(),
+      rating: parseInt(rating),
+      comment: comment.trim(),
+      service: service?.trim() || '',
+      status: 'pending', // Default status for moderation
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    const result = await reviewsCollection.insertOne(newReview);
+    
+    // Return the created review
+    const createdReview = {
+      ...newReview,
+      _id: result.insertedId.toString(),
+      id: result.insertedId.toString()
+    };
+    
+    res.status(201).json(createdReview);
+  } catch (error) {
+    console.error('Error creating review:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update review status (admin only)
+app.patch('/api/reviews/:id/status', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!['pending', 'approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status. Must be pending, approved, or rejected' });
+    }
+    
+    const db = await getDatabase();
+    const reviewsCollection = db.collection('reviews');
+    
+    const result = await reviewsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { 
+        $set: { 
+          status,
+          updatedAt: new Date().toISOString()
+        }
+      }
+    );
+    
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+    
+    res.json({ success: true, message: 'Review status updated successfully' });
+  } catch (error) {
+    console.error('Error updating review status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete review (admin only)
+app.delete('/api/reviews/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const db = await getDatabase();
+    const reviewsCollection = db.collection('reviews');
+    
+    const result = await reviewsCollection.deleteOne({ _id: new ObjectId(id) });
+    
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+    
+    res.json({ success: true, message: 'Review deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

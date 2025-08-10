@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut } from 'lucide-react';
+import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star } from 'lucide-react';
 import { clearAuthToken } from '../lib/auth';
 import { apiClient } from '../lib/api';
 
@@ -42,6 +42,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { href: '/admin/revenue', label: 'Revenue', icon: DollarSign },
     { href: '/admin/business-hours', label: 'Business Hours', icon: Clock },
     { href: '/admin/closure-dates', label: 'Closure Dates', icon: XCircle },
+    { href: '/admin/reviews', label: 'Reviews', icon: Star },
   ];
 
   return (
@@ -120,6 +121,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     }`}
                   >
                     Book Appointment
+                  </Link>
+                  <Link
+                    to="/reviews"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      location.pathname === '/reviews'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    Reviews
                   </Link>
                   <Link
                     to="/cancel"
@@ -213,6 +224,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Book Appointment
+                  </Link>
+                  <Link
+                    to="/reviews"
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      location.pathname === '/reviews'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Reviews
                   </Link>
                   <Link
                     to="/cancel"

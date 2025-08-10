@@ -48,6 +48,20 @@ export interface DaySchedule {
   isOpen: boolean;
 }
 
+export interface Review {
+  _id?: string;
+  id?: string;
+  customerName: string;
+  customerEmail?: string;
+  rating: number; // 1-5 stars
+  comment: string;
+  service?: string; // Optional: which service they reviewed
+  appointmentId?: string; // Optional: link to appointment
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Revenue {
   date: string;
   totalRevenue: number;

@@ -285,6 +285,57 @@ class ApiClient {
       body: JSON.stringify(emailData)
     });
   }
+
+  // Reviews methods
+  async getReviews(limit?: number) {
+    const query = limit ? `?limit=${limit}` : '';
+    return this.request<Array<{
+      _id: string;
+      customerName: string;
+      rating: number;
+      comment: string;
+      service?: string;
+      status: 'pending' | 'approved' | 'rejected';
+      createdAt: string;
+      updatedAt: string;
+    }>>(`/api/reviews${query}`);
+  }
+
+  async createReview(reviewData: {
+    customerName: string;
+    customerEmail?: string;
+    rating: number;
+    comment: string;
+    service?: string;
+    appointmentId?: string;
+  }) {
+    return this.request<{
+      _id: string;
+      message: string;
+    }>('/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify(reviewData)
+    });
+  }
+
+  async updateReviewStatus(reviewId: string, status: 'approved' | 'rejected') {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+    return this.request<{ message: string }>(`/api/reviews/${reviewId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    });
+  }
+
+  async deleteReview(reviewId: string) {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+    return this.request<{ message: string }>(`/api/reviews/${reviewId}`, {
+      method: 'DELETE'
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
