@@ -165,7 +165,17 @@ const BookingForm: React.FC<BookingFormProps> = ({
       onComplete();
     } catch (error) {
       console.error('Error creating appointment:', error);
-      setSubmitError('Failed to create appointment. Please try again.');
+      
+      // Check for specific error messages
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      if (errorMessage.includes('48 hours before the scheduled time')) {
+        setSubmitError('Sorry, appointments can only be changed up to 48 hours before the scheduled time. Please contact us directly for last-minute changes.');
+      } else if (errorMessage.includes('time slot is already booked')) {
+        setSubmitError('This time slot is no longer available. Please select a different time.');
+      } else {
+        setSubmitError('Failed to create appointment. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }

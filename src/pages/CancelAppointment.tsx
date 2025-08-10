@@ -26,6 +26,15 @@ const CancelAppointment: React.FC = () => {
     return phoneNumber.replace(/\D/g, '');
   };
 
+  // Check if appointment can be changed (48-hour rule)
+  const canChangeAppointment = (appointment: Appointment): boolean => {
+    const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
+    const now = new Date();
+    const fortyEightHoursFromNow = new Date(now.getTime() + (48 * 60 * 60 * 1000));
+    
+    return appointmentDateTime >= fortyEightHoursFromNow;
+  };
+
   const onSearch = async (data: SearchForm) => {
     if (!data.email && !data.phone) {
       setError('Please provide either email or phone number');
@@ -146,6 +155,22 @@ const CancelAppointment: React.FC = () => {
           <p className="text-gray-600">
             Enter your email or phone number to find your appointments. You can change or cancel them here.
           </p>
+        </div>
+
+        {/* Information Banner */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-start space-x-3">
+            <div className="bg-blue-100 rounded-full p-1">
+              <Clock className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-blue-900 mb-1">Appointment Change Policy</h3>
+              <p className="text-sm text-blue-700">
+                Appointments can only be changed up to <strong>48 hours</strong> before your scheduled time. 
+                For last-minute changes within 48 hours, please call us directly.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Search Form */}
@@ -280,14 +305,30 @@ const CancelAppointment: React.FC = () => {
                   </div>
 
                   <div className="ml-4 flex space-x-2">
-                    <button
-                      onClick={() => handleChangeAppointment(appointment)}
-                      disabled={loading}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span>Change</span>
-                    </button>
+                    {canChangeAppointment(appointment) ? (
+                      <button
+                        onClick={() => handleChangeAppointment(appointment)}
+                        disabled={loading}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                        <span>Change</span>
+                      </button>
+                    ) : (
+                      <div className="flex flex-col">
+                        <button
+                          disabled
+                          className="bg-gray-400 text-white px-4 py-2 rounded-md cursor-not-allowed opacity-50 flex items-center space-x-2"
+                          title="Appointments can only be changed up to 48 hours before the scheduled time"
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span>Change</span>
+                        </button>
+                        <span className="text-xs text-red-600 mt-1 text-center">
+                          Within 48h
+                        </span>
+                      </div>
+                    )}
                     <button
                       onClick={() => handleCancelAppointment(appointment._id)}
                       disabled={loading}
