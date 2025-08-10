@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 import { getDatabase } from './lib/mongodb.js';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
+import bcrypt from 'bcryptjs';
 import { sendBookingConfirmationEmail } from './api/send-confirmation-email';
 
 // Load environment variables
@@ -148,7 +149,6 @@ app.post('/api/auth/client-login', async (req, res) => {
     }
 
     // Check password
-    const bcrypt = await import('bcryptjs');
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -207,7 +207,6 @@ app.post('/api/auth/client-signup', async (req, res) => {
     }
 
     // Hash password
-    const bcrypt = await import('bcryptjs');
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
