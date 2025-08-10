@@ -285,26 +285,31 @@ const ClientAuth: React.FC = () => {
           <h3 className="text-center text-lg font-semibold text-gray-900 mb-4">
             💅 Popular Services Available
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 gap-4 text-sm">
             <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg p-3 border border-pink-100">
-              <div className="font-medium text-gray-900">Classic Manicure</div>
-              <div className="text-gray-600">Professional nail care & polish</div>
-              <div className="text-pink-600 font-semibold mt-1">From $25</div>
+              <div className="font-medium text-gray-900">Gel Polish</div>
+              <div className="text-gray-600">Long-lasting gel polish application</div>
+              <div className="text-pink-600 font-semibold mt-1">From £25</div>
             </div>
             <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-3 border border-purple-100">
-              <div className="font-medium text-gray-900">Gel Manicure</div>
-              <div className="text-gray-600">Long-lasting gel polish</div>
-              <div className="text-purple-600 font-semibold mt-1">From $35</div>
+              <div className="font-medium text-gray-900">Builder Gel</div>
+              <div className="text-gray-600">Strengthening gel overlay</div>
+              <div className="text-purple-600 font-semibold mt-1">From £35</div>
             </div>
             <div className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-lg p-3 border border-rose-100">
-              <div className="font-medium text-gray-900">Pedicure Deluxe</div>
-              <div className="text-gray-600">Relaxing foot treatment</div>
-              <div className="text-rose-600 font-semibold mt-1">From $45</div>
-            </div>
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 border border-indigo-100">
               <div className="font-medium text-gray-900">Nail Art</div>
               <div className="text-gray-600">Custom designs & creativity</div>
-              <div className="text-indigo-600 font-semibold mt-1">From $15</div>
+              <div className="text-rose-600 font-semibold mt-1">From £15</div>
+            </div>
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 border border-indigo-100">
+              <div className="font-medium text-gray-900">Builder Gel with Nail Art</div>
+              <div className="text-gray-600">Strengthening gel + custom art</div>
+              <div className="text-indigo-600 font-semibold mt-1">From £45</div>
+            </div>
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3 border border-emerald-100">
+              <div className="font-medium text-gray-900">Soak Off and New Set</div>
+              <div className="text-gray-600">Remove old set + fresh application</div>
+              <div className="text-emerald-600 font-semibold mt-1">From £40</div>
             </div>
           </div>
           <p className="text-center text-xs text-gray-500 mt-4">
