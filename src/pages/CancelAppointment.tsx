@@ -58,6 +58,19 @@ const CancelAppointment: React.FC = () => {
       console.log('🔍 Found appointments from API:', foundAppointments);
       console.log('📊 Found appointments count:', foundAppointments.length);
       
+      // Debug: Log each appointment's service field
+      foundAppointments.forEach((apt, index) => {
+        console.log(`📋 Appointment ${index + 1}:`, {
+          id: apt._id,
+          service: apt.service,
+          customerName: apt.customerName,
+          date: apt.date,
+          time: apt.time,
+          status: apt.status,
+          fullObject: apt
+        });
+      });
+      
       // For testing: show all found appointments, let server handle business rules
       const cancellableAppointments = foundAppointments.filter(apt => {
         // Only filter out already cancelled or completed appointments
