@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star, User } from 'lucide-react';
-import { clearAuthToken, isAuthenticated, isAdmin, isClient, getUser } from '../lib/auth';
+import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star } from 'lucide-react';
+import { clearAuthToken, isAuthenticated, isClient, getUser } from '../lib/auth';
 import { apiClient } from '../lib/api';
 
 interface LayoutProps {
@@ -18,7 +18,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   
   // Authentication state
   const userIsAuthenticated = isAuthenticated();
-  const userIsAdmin = userIsAuthenticated && isAdmin();
   const userIsClient = userIsAuthenticated && isClient();
   const currentUser = getUser();
 
