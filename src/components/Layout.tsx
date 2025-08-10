@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star } from 'lucide-react';
-import { clearAuthToken, isAuthenticated, isClient, getUser } from '../lib/auth';
+import { clearAuthToken, isAuthenticated, isClient, getUser, getUserInfo } from '../lib/auth';
 import { apiClient } from '../lib/api';
 
 interface LayoutProps {
@@ -20,6 +20,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const userIsAuthenticated = isAuthenticated();
   const userIsClient = userIsAuthenticated && isClient();
   const currentUser = getUser();
+  const userInfo = getUserInfo();
+  
+  // Get display name - prefer user's name, fallback to email
+  const displayName = userInfo?.name || currentUser?.email;
 
   // Track previous route to detect admin -> customer navigation
   const [wasAdminRoute, setWasAdminRoute] = useState(false);
@@ -148,7 +152,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     Cancel Appointment
                   </Link>
                   <div className="flex items-center space-x-3">
-                    <span className="text-sm text-gray-700">Welcome, {currentUser?.email}</span>
+                    <span className="text-sm text-gray-700">Welcome, {displayName}</span>
                     <button
                       onClick={() => {
                         apiClient.logout();
@@ -288,7 +292,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     Cancel Appointment
                   </Link>
                   <div className="px-3 py-2 text-sm text-gray-600">
-                    Welcome, {currentUser?.email}
+                    Welcome, {displayName}
                   </div>
                   <button
                     onClick={() => {

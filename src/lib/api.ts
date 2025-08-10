@@ -34,6 +34,7 @@ interface AuthResponse {
   user: {
     id: string;
     email: string;
+    name: string;
     role: string;
   };
 }
@@ -130,6 +131,10 @@ class ApiClient {
     if (response.token) {
       this.token = response.token;
       localStorage.setItem('authToken', response.token);
+      // Store user information if available
+      if (response.user) {
+        localStorage.setItem('userInfo', JSON.stringify(response.user));
+      }
     }
     
     return response;
@@ -144,6 +149,10 @@ class ApiClient {
     if (response.token) {
       this.token = response.token;
       localStorage.setItem('authToken', response.token);
+      // Store user information if available
+      if (response.user) {
+        localStorage.setItem('userInfo', JSON.stringify(response.user));
+      }
     }
     
     return response;
@@ -152,6 +161,7 @@ class ApiClient {
   logout(): void {
     this.token = null;
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userInfo');
     // Redirect to home page on logout
     window.location.href = '/';
   }

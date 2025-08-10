@@ -4,6 +4,13 @@ export interface JWTPayload {
   role: string;
 }
 
+export interface UserInfo {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}
+
 export function getAuthToken(): string | null {
   return localStorage.getItem('authToken');
 }
@@ -14,6 +21,17 @@ export function setAuthToken(token: string): void {
 
 export function clearAuthToken(): void {
   localStorage.removeItem('authToken');
+  localStorage.removeItem('userInfo');
+}
+
+export function getUserInfo(): UserInfo | null {
+  const userInfo = localStorage.getItem('userInfo');
+  if (!userInfo) return null;
+  try {
+    return JSON.parse(userInfo) as UserInfo;
+  } catch {
+    return null;
+  }
 }
 
 export function isAuthenticated(): boolean {
