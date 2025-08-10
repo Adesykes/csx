@@ -745,30 +745,17 @@ app.get('/api/revenue', authMiddleware, async (req, res) => {
   }
 });
 
+// Test endpoint to verify reviews route registration
+app.get('/api/reviews-test', (req, res) => {
+  res.json({ message: 'Reviews route is working', timestamp: new Date().toISOString() });
+});
+
 // Reviews endpoints
 // Get all reviews (public - only returns approved reviews for public view)
 app.get('/api/reviews', async (req, res) => {
   try {
-    const db = await getDatabase();
-    const reviewsCollection = db.collection('reviews');
-    
-    // For admin requests, return all reviews, for public only approved
-    const isAdminRequest = req.headers.authorization;
-    const filter = isAdminRequest ? {} : { status: 'approved' };
-    
-    const reviews = await reviewsCollection
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .toArray();
-      
-    // Convert MongoDB _id to id for frontend compatibility
-    const formattedReviews = reviews.map(review => ({
-      ...review,
-      _id: review._id.toString(),
-      id: review._id.toString()
-    }));
-    
-    res.json(formattedReviews);
+    // Simple test response first
+    res.json({ message: 'Reviews endpoint working', reviews: [] });
   } catch (error) {
     console.error('Error fetching reviews:', error);
     res.status(500).json({ error: 'Internal server error' });
