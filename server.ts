@@ -839,14 +839,66 @@ app.get('/api/revenue', authMiddleware, async (req, res) => {
   }
 });
 
-// Simple reviews endpoint for testing
+// Reviews endpoint
 app.get('/api/reviews', async (req, res) => {
   try {
     console.log('Reviews endpoint hit');
-    // Return an empty array for now - this matches what the frontend expects
-    res.json([]);
+    const db = await getDatabase();
+    
+    // Get limit from query parameter
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+    
+    // Fetch reviews from database, sorted by creation date (newest first)
+    let query = db.collection('reviews').find({}).sort({ createdAt: -1 });
+    
+    if (limit) {
+      query = query.limit(limit);
+    }
+    
+    const reviews = await query.toArray();
+    res.json(reviews);
   } catch (error) {
     console.error('Error in reviews endpoint:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create review endpoint
+app.post('/api/reviews', async (req, res) => {
+  try {
+    console.log('Create review endpoint hit', req.body);
+    const { customerName, customerEmail, rating, comment, service, appointmentId } = req.body;
+    
+    // Basic validation
+    if (!customerName || !rating || !comment) {
+      return res.status(400).json({ error: 'Customer name, rating, and comment are required' });
+    }
+    
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+    }
+    
+    const db = await getDatabase();
+    const reviewData = {
+      customerName,
+      customerEmail,
+      rating: Number(rating),
+      comment,
+      service,
+      appointmentId,
+      status: 'pending', // Reviews start as pending for moderation
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    const result = await db.collection('reviews').insertOne(reviewData);
+    
+    res.status(201).json({
+      _id: result.insertedId,
+      message: 'Review submitted successfully'
+    });
+  } catch (error) {
+    console.error('Error creating review:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
