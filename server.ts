@@ -937,12 +937,14 @@ app.patch('/api/appointments/:id/change', async (req, res) => {
     );
 
     // Create a new appointment with the new details
+    const serviceToUse = serviceName || originalAppointment.service || 'Service';
+    
     const newAppointment = {
       customerName: originalAppointment.customerName,
       customerEmail: originalAppointment.customerEmail,
       customerPhone: originalAppointment.customerPhone,
       serviceId: serviceId || originalAppointment.serviceId,
-      service: serviceName || originalAppointment.service, // Fixed: use 'service' field instead of 'serviceName'
+      service: serviceToUse, // Ensure service field is never undefined
       servicePrice: servicePrice || originalAppointment.servicePrice,
       date: appointmentDate,
       time: startTime,
@@ -956,8 +958,10 @@ app.patch('/api/appointments/:id/change', async (req, res) => {
       updatedAt: new Date()
     };
     
-    console.log('🔄 CHANGE ENDPOINT - New appointment data:', JSON.stringify(newAppointment, null, 2));
-    console.log('🔄 CHANGE ENDPOINT - Service field value:', newAppointment.service);
+    console.log('🔄 CHANGE ENDPOINT - serviceName from request:', serviceName);
+    console.log('🔄 CHANGE ENDPOINT - originalAppointment.service:', originalAppointment.service);
+    console.log('🔄 CHANGE ENDPOINT - serviceToUse:', serviceToUse);
+    console.log('🔄 CHANGE ENDPOINT - Final service field:', newAppointment.service);
 
     const result = await appointmentsCollection.insertOne(newAppointment);
     
