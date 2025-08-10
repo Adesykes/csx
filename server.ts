@@ -969,6 +969,9 @@ app.patch('/api/appointments/:id/change', async (req, res) => {
     const completeNewAppointment = await appointmentsCollection.findOne({ _id: result.insertedId });
     const completeCancelledAppointment = await appointmentsCollection.findOne({ _id: new ObjectId(id) });
 
+    console.log('🔄 CHANGE ENDPOINT - INSERTED APPOINTMENT:', JSON.stringify(completeNewAppointment, null, 2));
+    console.log('🔄 CHANGE ENDPOINT - Service field in saved appointment:', completeNewAppointment?.service);
+
     // TODO: Send confirmation email for the new appointment
     // For now, we'll skip the email to avoid complexity - can be added later
     console.log('New appointment created for:', originalAppointment.customerEmail);
