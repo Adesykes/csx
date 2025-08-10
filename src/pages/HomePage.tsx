@@ -365,19 +365,58 @@ const HomePage = (): JSX.Element => {
 
         {/* Appointment Change Banner */}
         {isChangingAppointment && appointmentToChange && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center space-x-2 mb-2">
-              <Edit className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold text-blue-900">Changing Appointment</h3>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6 mb-6 shadow-md">
+            <div className="flex items-start space-x-3">
+              <div className="bg-blue-100 rounded-full p-2">
+                <Edit className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center space-x-2 mb-2">
+                  <h3 className="font-bold text-blue-900 text-lg">🔄 Changing Your Appointment</h3>
+                  <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">In Progress</span>
+                </div>
+                
+                <div className="bg-white rounded-md p-3 mb-3 border border-blue-200">
+                  <h4 className="font-semibold text-gray-900 mb-2">Original Appointment Details:</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                    <div>
+                      <span className="font-medium text-gray-700">Service:</span>
+                      <p className="text-gray-900">{appointmentToChange.currentService}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Date:</span>
+                      <p className="text-gray-900">{format(new Date(appointmentToChange.currentDate), 'EEEE, MMM do, yyyy')}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Time:</span>
+                      <p className="text-gray-900">{appointmentToChange.currentTime}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                    <p className="text-amber-800 text-sm font-medium">
+                      Select your new services, date, and time below
+                    </p>
+                  </div>
+                  <p className="text-amber-700 text-xs mt-1">
+                    ⚠️ Your original appointment will be automatically cancelled once you complete the new booking
+                  </p>
+                </div>
+                
+                <button
+                  onClick={() => {
+                    sessionStorage.removeItem('appointmentToChange');
+                    window.location.href = '/cancel';
+                  }}
+                  className="mt-3 text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  Cancel appointment change and go back
+                </button>
+              </div>
             </div>
-            <p className="text-blue-800 text-sm">
-              You are changing your appointment for <strong>{appointmentToChange.currentService}</strong> 
-              {' '}on <strong>{format(new Date(appointmentToChange.currentDate), 'EEEE, MMMM do, yyyy')}</strong>
-              {' '}at <strong>{appointmentToChange.currentTime}</strong>.
-            </p>
-            <p className="text-blue-700 text-xs mt-2">
-              Select your new services, date, and time below. Your original appointment will be automatically cancelled.
-            </p>
           </div>
         )}
 
@@ -638,23 +677,54 @@ const HomePage = (): JSX.Element => {
 
           {currentStep === 'confirmation' && bookingSuccess && (
             <div className="text-center py-8">
-              <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {isChangingAppointment ? 'Appointment Changed!' : 'Booking Confirmed!'}
-              </h2>
-              <p className="text-gray-600 mb-6">
-                {isChangingAppointment 
-                  ? 'Your appointment has been successfully changed. You will receive a confirmation email shortly.'
-                  : 'Your appointment has been successfully booked. You will receive a confirmation email shortly.'
-                }
-              </p>
-              <div className="flex justify-center">
+              <div className="mb-6">
+                <CheckCircle className="h-20 w-20 text-green-600 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {isChangingAppointment ? '🔄 Appointment Successfully Changed!' : '✅ Booking Confirmed!'}
+                </h2>
+                
+                {isChangingAppointment ? (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 max-w-md mx-auto">
+                    <div className="text-sm space-y-2">
+                      <div className="flex items-center justify-center space-x-2 text-green-800 font-medium">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Original appointment cancelled</span>
+                      </div>
+                      <div className="flex items-center justify-center space-x-2 text-green-800 font-medium">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>New appointment confirmed</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+                
+                <p className="text-gray-600 mb-2">
+                  {isChangingAppointment 
+                    ? 'Your appointment has been successfully changed and your original appointment has been automatically cancelled.'
+                    : 'Your appointment has been successfully booked.'
+                  }
+                </p>
+                <p className="text-gray-500 text-sm">
+                  You will receive a confirmation email shortly with all the details.
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
                 <button
                   onClick={resetBooking}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                  className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors font-medium"
                 >
-                  {isChangingAppointment ? 'Done' : 'Book Another Appointment'}
+                  {isChangingAppointment ? 'Return to Manage Appointments' : 'Book Another Appointment'}
                 </button>
+                
+                {isChangingAppointment && (
+                  <button
+                    onClick={() => window.location.href = '/'}
+                    className="bg-gray-100 text-gray-700 px-6 py-3 rounded-md hover:bg-gray-200 transition-colors font-medium"
+                  >
+                    Go to Homepage
+                  </button>
+                )}
               </div>
             </div>
           )}
