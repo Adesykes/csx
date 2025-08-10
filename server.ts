@@ -866,6 +866,11 @@ app.patch('/api/appointments/:id/change', async (req, res) => {
   try {
     const { id } = req.params;
     const { appointmentDate, startTime, endTime, serviceId, serviceName, servicePrice } = req.body;
+    
+    console.log('🔄 CHANGE ENDPOINT - Received request for appointment:', id);
+    console.log('🔄 CHANGE ENDPOINT - Request body:', JSON.stringify(req.body, null, 2));
+    console.log('🔄 CHANGE ENDPOINT - serviceName value:', serviceName);
+    
     const db = await getDatabase();
     const appointmentsCollection = db.collection('appointments');
     
@@ -880,6 +885,8 @@ app.patch('/api/appointments/:id/change', async (req, res) => {
 
     // Find the original appointment
     const originalAppointment = await appointmentsCollection.findOne({ _id: new ObjectId(id) });
+    
+    console.log('🔄 CHANGE ENDPOINT - Original appointment found:', JSON.stringify(originalAppointment, null, 2));
     
     if (!originalAppointment) {
       return res.status(404).json({ error: 'Appointment not found' });
@@ -948,6 +955,9 @@ app.patch('/api/appointments/:id/change', async (req, res) => {
       createdAt: new Date(),
       updatedAt: new Date()
     };
+    
+    console.log('🔄 CHANGE ENDPOINT - New appointment data:', JSON.stringify(newAppointment, null, 2));
+    console.log('🔄 CHANGE ENDPOINT - Service field value:', newAppointment.service);
 
     const result = await appointmentsCollection.insertOne(newAppointment);
     
