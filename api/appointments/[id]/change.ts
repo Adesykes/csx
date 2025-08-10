@@ -109,7 +109,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       customerEmail: originalAppointment.customerEmail,
       customerPhone: originalAppointment.customerPhone,
       serviceId: serviceId || originalAppointment.serviceId,
-      service: serviceName || originalAppointment.service, // Use 'service' field to match the schema
+      service: serviceName || originalAppointment.service || 'Service', // Fallback to 'Service' if both are undefined
       servicePrice: servicePrice || originalAppointment.servicePrice,
       date: appointmentDate,
       time: startTime,
@@ -127,6 +127,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       service: newAppointment.service,
       serviceName: serviceName,
       originalService: originalAppointment.service,
+      fallbackApplied: !serviceName && !originalAppointment.service,
       fullNewAppointment: newAppointment
     });
 
