@@ -63,6 +63,14 @@ const ClientAuth: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
+        {/* Booking Access Banner */}
+        <div className="bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg p-4 text-white text-center">
+          <div className="text-sm font-medium">🎯 Booking System Access Required</div>
+          <div className="text-xs opacity-90 mt-1">
+            {isLogin ? 'Please sign in to continue' : 'Create your account to get started'}
+          </div>
+        </div>
+
         <div>
           <div className="mx-auto h-16 w-16 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
             <User className="h-8 w-8 text-white" />
@@ -71,8 +79,36 @@ const ClientAuth: React.FC = () => {
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {isLogin ? 'Sign in to book your appointment' : 'Join CXS Nail Lounge today'}
+            {isLogin ? 'Sign in to access our booking system' : 'Join CXS Nail Lounge to book appointments'}
           </p>
+          
+          {/* Booking System Preview */}
+          <div className="mt-6 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg p-4 border border-pink-200">
+            <h3 className="text-center text-lg font-semibold text-gray-800 mb-3">
+              🌟 What's Inside Our Booking System
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                <span className="text-gray-700">Premium Nail Services</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span className="text-gray-700">Real-time Availability</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                <span className="text-gray-700">Instant Booking</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span className="text-gray-700">Manage Appointments</span>
+              </div>
+            </div>
+            <p className="text-center text-xs text-gray-600 mt-3">
+              {isLogin ? 'Sign in now to book your next appointment!' : 'Create your account to get started!'}
+            </p>
+          </div>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -217,6 +253,38 @@ const ClientAuth: React.FC = () => {
             </button>
           </div>
         </form>
+
+        {/* Popular Services Preview */}
+        <div className="mt-8 bg-white rounded-lg shadow-md p-6 border border-gray-200">
+          <h3 className="text-center text-lg font-semibold text-gray-900 mb-4">
+            💅 Popular Services Available
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg p-3 border border-pink-100">
+              <div className="font-medium text-gray-900">Classic Manicure</div>
+              <div className="text-gray-600">Professional nail care & polish</div>
+              <div className="text-pink-600 font-semibold mt-1">From $25</div>
+            </div>
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-3 border border-purple-100">
+              <div className="font-medium text-gray-900">Gel Manicure</div>
+              <div className="text-gray-600">Long-lasting gel polish</div>
+              <div className="text-purple-600 font-semibold mt-1">From $35</div>
+            </div>
+            <div className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-lg p-3 border border-rose-100">
+              <div className="font-medium text-gray-900">Pedicure Deluxe</div>
+              <div className="text-gray-600">Relaxing foot treatment</div>
+              <div className="text-rose-600 font-semibold mt-1">From $45</div>
+            </div>
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 border border-indigo-100">
+              <div className="font-medium text-gray-900">Nail Art</div>
+              <div className="text-gray-600">Custom designs & creativity</div>
+              <div className="text-indigo-600 font-semibold mt-1">From $15</div>
+            </div>
+          </div>
+          <p className="text-center text-xs text-gray-500 mt-4">
+            {isLogin ? 'Sign in to see full pricing and book instantly!' : 'Create account to access our full service menu!'}
+          </p>
+        </div>
       </div>
     </div>
   );
