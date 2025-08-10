@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Calendar, AlertCircle, Check, X } from 'lucide-react';
+import { format, addDays, startOfDay } from 'date-fns';
 import { apiClient } from '../lib/api';
 import { Service } from '../types';
 import Calendar_Component from './Calendar';
@@ -28,6 +29,9 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [availableDates, setAvailableDates] = useState<Date[]>([]);
+  const [businessHours, setBusinessHours] = useState<any[]>([]);
+  const [closureDates, setClosureDates] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -35,6 +39,7 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
 
   useEffect(() => {
     loadServices();
+    loadBusinessData();
     checkIfCanChange();
   }, []);
 
@@ -43,6 +48,34 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
       loadAvailableSlots();
     }
   }, [selectedDate, selectedService]);
+
+  // Generate available dates when business hours and closure dates are loaded
+  useEffect(() => {
+    if (businessHours.length === 0) return;
+    
+    const dates: Date[] = [];
+    const today = startOfDay(new Date());
+    
+    for (let i = 0; i <= 30; i++) { // Next 30 days
+      const date = addDays(today, i);
+      const dayOfWeek = format(date, 'EEEE'); // Monday, Tuesday, etc.
+      const dateString = format(date, 'yyyy-MM-dd');
+      
+      // Check if date is a closure date
+      if (closureDates.includes(dateString)) {
+        continue; // Skip closure dates
+      }
+      
+      const daySchedule = businessHours.find((schedule: any) => schedule.day === dayOfWeek);
+      
+      // Only include dates where the business is open
+      if (daySchedule && daySchedule.isOpen) {
+        dates.push(date);
+      }
+    }
+    
+    setAvailableDates(dates);
+  }, [businessHours, closureDates]);
 
   const checkIfCanChange = () => {
     const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
@@ -83,6 +116,22 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
     } catch (err) {
       console.error('Error loading services:', err);
       setError('Failed to load services');
+    }
+  };
+
+  const loadBusinessData = async () => {
+    try {
+      // Load business hours
+      const businessHoursData = await apiClient.getBusinessHours();
+      setBusinessHours(businessHoursData);
+      
+      // Load closure dates  
+      const closureDatesData = await apiClient.getClosureDates();
+      const closureDatesStrings = closureDatesData.map((closure: any) => closure.date);
+      setClosureDates(closureDatesStrings);
+    } catch (err) {
+      console.error('Error loading business data:', err);
+      setError('Failed to load business hours and closure dates');
     }
   };
 
@@ -294,7 +343,7 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
         <Calendar_Component
           selectedDate={selectedDate}
           onDateSelect={handleDateSelect}
-          availableDates={[]} // Will be populated with actual available dates
+          availableDates={availableDates}
         />
       </div>
 
