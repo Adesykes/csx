@@ -149,7 +149,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
-                    Cancel Appointment
+                    Manage Appointments
                   </Link>
                   <div className="flex items-center space-x-3">
                     <span className="text-sm text-gray-700">Welcome, {displayName}</span>
@@ -184,7 +184,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
-                    Cancel Appointment
+                    Manage Appointments
                   </Link>
                   <Link
                     to="/admin"
@@ -289,7 +289,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Cancel Appointment
+                    Manage Appointments
                   </Link>
                   <div className="px-3 py-2 text-sm text-gray-600">
                     Welcome, {displayName}
@@ -327,7 +327,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Cancel Appointment
+                    Manage Appointments
                   </Link>
                   <Link
                     to="/admin"
