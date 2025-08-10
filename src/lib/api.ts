@@ -259,7 +259,7 @@ class ApiClient {
 
   async getMyAppointments() {
     // Get appointments for the currently logged-in client
-    return this.request<Appointment[]>('/api/appointments/my-appointments');
+    return this.request<Appointment[]>('/api/my-appointments');
   }
 
   async cancelAppointment(appointmentId: string) {
