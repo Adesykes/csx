@@ -843,7 +843,8 @@ app.get('/api/revenue', authMiddleware, async (req, res) => {
 app.get('/api/reviews', async (req, res) => {
   try {
     console.log('Reviews endpoint hit');
-    res.json({ message: 'Reviews endpoint working', reviews: [], timestamp: new Date().toISOString() });
+    // Return an empty array for now - this matches what the frontend expects
+    res.json([]);
   } catch (error) {
     console.error('Error in reviews endpoint:', error);
     res.status(500).json({ error: 'Internal server error' });
