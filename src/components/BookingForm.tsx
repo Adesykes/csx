@@ -116,13 +116,16 @@ const BookingForm: React.FC<BookingFormProps> = ({
       
       if (isChangingAppointment && appointmentToChange) {
         // Handle appointment change - call the change API instead of create
+        // Use original service info if no new services selected
+        const useOriginalService = selectedServices.length === 0;
+        
         await apiClient.changeAppointment(appointmentToChange.oldAppointmentId, {
           appointmentDate: format(selectedDate, 'yyyy-MM-dd'),
           startTime: selectedTime,
           endTime: calculateEndTime(selectedTime, totalDuration),
-          serviceId: selectedServices[0]._id || selectedServices[0].id,
-          serviceName: serviceNames,
-          servicePrice: totalPrice
+          serviceId: useOriginalService ? undefined : (selectedServices[0]._id || selectedServices[0].id),
+          serviceName: useOriginalService ? appointmentToChange.currentService : serviceNames,
+          servicePrice: useOriginalService ? undefined : totalPrice
         });
         
         // Clear the appointment change data from sessionStorage

@@ -20,6 +20,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { id } = req.query;
     const { appointmentDate, startTime, endTime, serviceId, serviceName, servicePrice } = req.body;
     
+    console.log('🔄 Change appointment request:', {
+      id,
+      appointmentDate,
+      startTime,
+      endTime,
+      serviceId,
+      serviceName,
+      servicePrice,
+      fullBody: req.body
+    });
+    
     if (!id || typeof id !== 'string') {
       return res.status(400).json({ error: 'Appointment ID is required' });
     }
@@ -37,6 +48,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Find the original appointment
     const originalAppointment = await appointmentsCollection.findOne({ _id: new ObjectId(id) });
+    
+    console.log('📋 Original appointment found:', {
+      id: originalAppointment?._id,
+      service: originalAppointment?.service,
+      serviceName: originalAppointment?.serviceName,
+      customerName: originalAppointment?.customerName
+    });
     
     if (!originalAppointment) {
       return res.status(404).json({ error: 'Appointment not found' });
@@ -104,6 +122,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       createdAt: new Date(),
       updatedAt: new Date()
     };
+
+    console.log('✨ New appointment being created:', {
+      service: newAppointment.service,
+      serviceName: serviceName,
+      originalService: originalAppointment.service,
+      fullNewAppointment: newAppointment
+    });
 
     const result = await appointmentsCollection.insertOne(newAppointment);
     
