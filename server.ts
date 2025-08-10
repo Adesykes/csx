@@ -937,30 +937,31 @@ app.patch('/api/appointments/:id/change', async (req, res) => {
     );
 
     // Create a new appointment with the new details
-    const serviceToUse = serviceName || originalAppointment.service || 'Service';
-    
     const newAppointment = {
+      // Keep original customer data
       customerName: originalAppointment.customerName,
       customerEmail: originalAppointment.customerEmail,
       customerPhone: originalAppointment.customerPhone,
-      serviceId: serviceId || originalAppointment.serviceId,
-      service: serviceToUse, // Ensure service field is never undefined
-      servicePrice: servicePrice || originalAppointment.servicePrice,
-      date: appointmentDate,
-      time: startTime,
-      endTime: endTime,
-      status: 'pending',
       paymentStatus: originalAppointment.paymentStatus,
       paymentIntentId: originalAppointment.paymentIntentId,
       notes: originalAppointment.notes,
+      
+      // Use new appointment details from request
+      date: appointmentDate,
+      time: startTime,
+      endTime: endTime,
+      serviceId: serviceId || originalAppointment.serviceId,
+      service: serviceName || 'Service', // Direct assignment - serviceName should be 'Gel Nails'
+      servicePrice: servicePrice || originalAppointment.servicePrice,
+      
+      // Set status and metadata
+      status: 'pending',
       originalAppointmentId: originalAppointment._id, // Reference to original
       createdAt: new Date(),
       updatedAt: new Date()
     };
     
     console.log('🔄 CHANGE ENDPOINT - serviceName from request:', serviceName);
-    console.log('🔄 CHANGE ENDPOINT - originalAppointment.service:', originalAppointment.service);
-    console.log('🔄 CHANGE ENDPOINT - serviceToUse:', serviceToUse);
     console.log('🔄 CHANGE ENDPOINT - Final service field:', newAppointment.service);
 
     const result = await appointmentsCollection.insertOne(newAppointment);
