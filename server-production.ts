@@ -16,14 +16,25 @@ const PORT = process.env.PORT || 10000;
 // Enable CORS and JSON parsing
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? true // Allow all origins in production for testing - you can restrict this later
+    ? ['https://www.csxnaillounge.co.uk', 'https://csxnaillounge.co.uk', 'https://csx-nail-lounge.vercel.app'] // Production domains
     : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:5178'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Handle preflight requests explicitly
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
 
 // Auth middleware
 const authMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -46,6 +57,7 @@ const authMiddleware = async (req: express.Request, res: express.Response, next:
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
+    version: '1.0.1', // Added version to trigger redeploy
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development'
