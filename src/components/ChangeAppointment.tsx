@@ -58,10 +58,12 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
   const loadServices = async () => {
     try {
       const servicesData = await apiClient.getServices();
+      console.log('Loaded services:', servicesData);
       setServices(servicesData.filter(service => service.active));
       
       // Find and set the current service
       const currentService = servicesData.find(s => s._id === appointment.serviceId || s.name === appointment.serviceName);
+      console.log('Current service found:', currentService);
       if (currentService) {
         setSelectedService(currentService);
       }
@@ -249,7 +251,9 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
         <select
           value={selectedService?._id || ''}
           onChange={(e) => {
+            console.log('Service selection changed:', e.target.value);
             const service = services.find(s => s._id === e.target.value);
+            console.log('Found service:', service);
             if (service) handleServiceChange(service);
           }}
           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -261,6 +265,9 @@ const ChangeAppointment = ({ appointment, onAppointmentChanged, onCancel }: Chan
             </option>
           ))}
         </select>
+        <div className="mt-2 text-sm text-gray-500">
+          Debug: {services.length} services loaded, selected: {selectedService?.name || 'None'}
+        </div>
       </div>
 
       {/* Calendar */}
