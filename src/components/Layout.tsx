@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star } from 'lucide-react';
 import { clearAuthToken, isAuthenticated, isClient, getUser, getUserInfo, logout } from '../lib/auth';
 import { apiClient } from '../lib/api';
+import { usePendingReviews } from '../hooks/usePendingReviews';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -24,6 +25,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   
   // Get display name - prefer user's name, fallback to email
   const displayName = userInfo?.name || currentUser?.email;
+
+  // Pending reviews for admin notification
+  const { pendingCount } = usePendingReviews();
 
   // Track previous route to detect admin -> customer navigation
   const [wasAdminRoute, setWasAdminRoute] = useState(false);
@@ -84,11 +88,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <>
                   {adminNavLinks.map((link) => {
                     const Icon = link.icon;
+                    const isReviewsLink = link.href === '/admin/reviews';
                     return (
                       <Link
                         key={link.href}
                         to={link.href}
-                        className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors relative ${
                           location.pathname === link.href
                             ? 'bg-blue-100 text-blue-700'
                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -96,6 +101,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       >
                         <Icon className="h-4 w-4" />
                         <span>{link.label}</span>
+                        {isReviewsLink && pendingCount > 0 && (
+                          <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full animate-pulse">
+                            {pendingCount}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
@@ -208,11 +218,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <>
                   {adminNavLinks.map((link) => {
                     const Icon = link.icon;
+                    const isReviewsLink = link.href === '/admin/reviews';
                     return (
                       <Link
                         key={link.href}
                         to={link.href}
-                        className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                        className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium transition-colors relative ${
                           location.pathname === link.href
                             ? 'bg-blue-100 text-blue-700'
                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -221,6 +232,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       >
                         <Icon className="h-5 w-5" />
                         <span>{link.label}</span>
+                        {isReviewsLink && pendingCount > 0 && (
+                          <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full animate-pulse">
+                            {pendingCount}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}

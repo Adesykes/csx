@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { Check, DollarSign, CreditCard, Banknote, X, Trash2, Building2, Mail, Phone, Filter, Search, Calendar, Edit3, Save, XCircle } from 'lucide-react';
 import { apiClient } from '../../lib/api';
 import type { Appointment } from '../../lib/api';
+import PendingReviewsNotification from '../../components/PendingReviewsNotification';
 
 interface AppointmentData extends Appointment {
   _id: string;
@@ -212,6 +213,8 @@ const AdminAppointments: React.FC = () => {
 
   return (
     <div className="p-6">
+      <PendingReviewsNotification />
+      
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Appointments</h1>
         <button

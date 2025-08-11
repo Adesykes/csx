@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { apiClient } from '../../lib/api';
 import { DollarSign, TrendingUp, Calendar, Download, CreditCard, Banknote, RefreshCw } from 'lucide-react';
+import PendingReviewsNotification from '../../components/PendingReviewsNotification';
 
 type DateRangeType = 'month' | 'financial-year' | 'custom';
 
@@ -184,6 +185,8 @@ const AdminRevenue: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <PendingReviewsNotification />
+      
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Revenue</h1>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Star, Check, X, Trash2, Eye } from 'lucide-react';
 import { apiClient } from '../../lib/api';
 import { Review } from '../../types';
@@ -10,6 +11,17 @@ const AdminReviews = (): JSX.Element => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Check for filter query parameter on component mount
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const filterParam = searchParams.get('filter');
+    if (filterParam && ['all', 'pending', 'approved', 'rejected'].includes(filterParam)) {
+      setFilter(filterParam as 'all' | 'pending' | 'approved' | 'rejected');
+    }
+  }, [location.search]);
 
   const loadReviews = async () => {
     try {
