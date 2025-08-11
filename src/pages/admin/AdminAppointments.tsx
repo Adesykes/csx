@@ -1,6 +1,6 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { Check, DollarSign, CreditCard, Banknote, X, Trash2, Building2, Mail, Phone } from 'lucide-react';
+import { Check, DollarSign, CreditCard, Banknote, X, Trash2, Building2, Mail, Phone, Filter, Search, Calendar } from 'lucide-react';
 import { apiClient } from '../../lib/api';
 import type { Appointment } from '../../lib/api';
 
@@ -19,6 +19,75 @@ interface AppointmentData extends Appointment {
 const AdminAppointments: React.FC = () => {
   const [appointments, setAppointments] = useState<AppointmentData[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Filter states
+  const [filters, setFilters] = useState({
+    searchText: '',
+    status: '',
+    paymentStatus: '',
+    paymentMethod: '',
+    dateFrom: '',
+    dateTo: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Filtered appointments using useMemo for performance
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter(appointment => {
+      // Text search (name, email, service)
+      if (filters.searchText) {
+        const searchLower = filters.searchText.toLowerCase();
+        const matchesSearch = 
+          appointment.customerName.toLowerCase().includes(searchLower) ||
+          appointment.customerEmail.toLowerCase().includes(searchLower) ||
+          (appointment.service && appointment.service.toLowerCase().includes(searchLower)) ||
+          appointment.customerPhone.includes(filters.searchText);
+        
+        if (!matchesSearch) return false;
+      }
+
+      // Status filter
+      if (filters.status && appointment.status !== filters.status) {
+        return false;
+      }
+
+      // Payment status filter
+      if (filters.paymentStatus && appointment.paymentStatus !== filters.paymentStatus) {
+        return false;
+      }
+
+      // Payment method filter
+      if (filters.paymentMethod && appointment.paymentMethod !== filters.paymentMethod) {
+        return false;
+      }
+
+      // Date range filter
+      if (filters.dateFrom) {
+        const appointmentDate = new Date(appointment.date);
+        const fromDate = new Date(filters.dateFrom);
+        if (appointmentDate < fromDate) return false;
+      }
+
+      if (filters.dateTo) {
+        const appointmentDate = new Date(appointment.date);
+        const toDate = new Date(filters.dateTo);
+        if (appointmentDate > toDate) return false;
+      }
+
+      return true;
+    });
+  }, [appointments, filters]);
+
+  const clearFilters = () => {
+    setFilters({
+      searchText: '',
+      status: '',
+      paymentStatus: '',
+      paymentMethod: '',
+      dateFrom: '',
+      dateTo: ''
+    });
+  };
 
   useEffect(() => {
     fetchAppointments();
@@ -102,7 +171,165 @@ const AdminAppointments: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Appointments</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Appointments</h1>
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          <Filter className="h-4 w-4 mr-2" />
+          {showFilters ? 'Hide Filters' : 'Show Filters'}
+        </button>
+      </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="bg-gray-50 p-4 rounded-lg mb-6 border">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Search Text */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Search (Name, Email, Service, Phone)
+              </label>
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
+                <input
+                  type="text"
+                  value={filters.searchText}
+                  onChange={(e) => setFilters({ ...filters, searchText: e.target.value })}
+                  placeholder="Type to search..."
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            {/* Payment Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Payment Status
+              </label>
+              <select
+                value={filters.paymentStatus}
+                onChange={(e) => setFilters({ ...filters, paymentStatus: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">All Payment Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="refunded">Refunded</option>
+              </select>
+            </div>
+
+            {/* Payment Method Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Payment Method
+              </label>
+              <select
+                value={filters.paymentMethod}
+                onChange={(e) => setFilters({ ...filters, paymentMethod: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">All Methods</option>
+                <option value="cash">Cash</option>
+                <option value="bank_transfer">Bank Transfer</option>
+              </select>
+            </div>
+
+            {/* Date From */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                From Date
+              </label>
+              <div className="relative">
+                <Calendar className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
+                <input
+                  type="date"
+                  value={filters.dateFrom}
+                  onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Date To */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                To Date
+              </label>
+              <div className="relative">
+                <Calendar className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
+                <input
+                  type="date"
+                  value={filters.dateTo}
+                  onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Filter Actions */}
+          <div className="flex items-center gap-4 mt-4">
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+            >
+              Clear All Filters
+            </button>
+            <div className="text-sm text-gray-600">
+              Showing {filteredAppointments.length} of {appointments.length} appointments
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Stats */}
+      {(filters.searchText || filters.status || filters.paymentStatus || filters.paymentMethod || filters.dateFrom || filters.dateTo) && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div className="bg-blue-50 p-3 rounded-lg">
+            <div className="text-sm text-blue-600 font-medium">Total Filtered</div>
+            <div className="text-xl font-bold text-blue-900">{filteredAppointments.length}</div>
+          </div>
+          <div className="bg-green-50 p-3 rounded-lg">
+            <div className="text-sm text-green-600 font-medium">Confirmed/Completed</div>
+            <div className="text-xl font-bold text-green-900">
+              {filteredAppointments.filter(a => a.status === 'confirmed' || a.status === 'completed').length}
+            </div>
+          </div>
+          <div className="bg-yellow-50 p-3 rounded-lg">
+            <div className="text-sm text-yellow-600 font-medium">Pending Payment</div>
+            <div className="text-xl font-bold text-yellow-900">
+              {filteredAppointments.filter(a => a.paymentStatus === 'pending').length}
+            </div>
+          </div>
+          <div className="bg-purple-50 p-3 rounded-lg">
+            <div className="text-sm text-purple-600 font-medium">Total Value</div>
+            <div className="text-xl font-bold text-purple-900">
+              ${filteredAppointments.reduce((sum, a) => sum + a.servicePrice, 0).toFixed(2)}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border border-gray-300">
           <thead>
@@ -120,7 +347,7 @@ const AdminAppointments: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {appointments.map((appointment) => (
+            {filteredAppointments.map((appointment) => (
               <tr key={appointment._id} className="hover:bg-gray-50">
                 <td className="py-2 px-4 border-b">{appointment.customerName}</td>
                 <td className="py-2 px-4 border-b">
@@ -233,9 +460,9 @@ const AdminAppointments: React.FC = () => {
             ))}
           </tbody>
         </table>
-        {appointments.length === 0 && (
+        {filteredAppointments.length === 0 && (
           <div className="text-center py-8 text-gray-500">
-            No appointments found.
+            {appointments.length === 0 ? 'No appointments found.' : 'No appointments match the current filters.'}
           </div>
         )}
       </div>
