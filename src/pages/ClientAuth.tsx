@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../lib/api';
 import { isAuthenticated } from '../lib/auth';
 import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
+import StarRating from '../components/StarRating';
 
 const ClientAuth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,6 +15,8 @@ const ClientAuth: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
   const navigate = useNavigate();
 
   // Helper function to navigate after authentication
@@ -32,11 +35,30 @@ const ClientAuth: React.FC = () => {
     }
   };
 
-  // Redirect if already authenticated
+  // Load reviews data
+  const loadReviews = async () => {
+    try {
+      const reviewsData = await apiClient.getReviews();
+      // Filter to show only approved reviews
+      const approvedReviews = reviewsData.filter(review => review.status === 'approved');
+      setTotalReviews(approvedReviews.length);
+      
+      // Calculate average rating
+      if (approvedReviews.length > 0) {
+        const sum = approvedReviews.reduce((acc, review) => acc + review.rating, 0);
+        setAverageRating(sum / approvedReviews.length);
+      }
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    }
+  };
+
+  // Redirect if already authenticated and load reviews
   useEffect(() => {
     if (isAuthenticated()) {
       navigateAfterAuth();
     }
+    loadReviews();
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -149,6 +171,30 @@ const ClientAuth: React.FC = () => {
               {isLogin ? 'Sign in now to book your next appointment!' : 'Create your account to get started!'}
             </p>
           </div>
+
+          {/* Customer Reviews Section */}
+          {totalReviews > 0 && (
+            <div className="mt-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200">
+              <h3 className="text-center text-lg font-semibold text-gray-800 mb-3">
+                ⭐ What Our Customers Say
+              </h3>
+              <div className="flex items-center justify-center space-x-3 mb-3">
+                <StarRating rating={averageRating} readonly size="md" />
+                <div className="text-sm text-gray-700">
+                  <span className="font-semibold">{averageRating.toFixed(1)}</span> out of 5
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">{totalReviews}</div>
+                <div className="text-sm text-gray-600">
+                  {totalReviews === 1 ? 'Happy Customer' : 'Happy Customers'}
+                </div>
+              </div>
+              <p className="text-center text-xs text-gray-600 mt-3">
+                Join our satisfied customers and experience premium nail care!
+              </p>
+            </div>
+          )}
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
