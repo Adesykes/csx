@@ -298,8 +298,26 @@ const ClientAuth: React.FC = () => {
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
+            <div className={`rounded-md p-4 ${
+              error === 'You will need to sign up again' 
+                ? 'bg-blue-50 border border-blue-200' 
+                : 'bg-red-50'
+            }`}>
+              <div className={`text-sm ${
+                error === 'You will need to sign up again' 
+                  ? 'text-blue-700' 
+                  : 'text-red-700'
+              }`}>
+                {error === 'You will need to sign up again' && (
+                  <div className="flex items-center">
+                    <span className="mr-2">🔄</span>
+                    <span>
+                      <strong>Password Reset:</strong> {error}. Please create a new account below.
+                    </span>
+                  </div>
+                )}
+                {error !== 'You will need to sign up again' && error}
+              </div>
             </div>
           )}
 
@@ -320,7 +338,23 @@ const ClientAuth: React.FC = () => {
             </button>
           </div>
 
-          <div className="text-center">
+          <div className="text-center space-y-2">
+            {isLogin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLogin(false);
+                  setError('You will need to sign up again');
+                  setPassword('');
+                  setConfirmPassword('');
+                  setName('');
+                  setEmail('');
+                }}
+                className="block text-sm text-gray-600 hover:text-pink-500 font-medium mb-2"
+              >
+                Forgot your password?
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
