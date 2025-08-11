@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star } from 'lucide-react';
+import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star, Instagram } from 'lucide-react';
 import { clearAuthToken, isAuthenticated, isClient, getUser, getUserInfo, logout } from '../lib/auth';
 import { apiClient } from '../lib/api';
 import { usePendingReviews } from '../hooks/usePendingReviews';
@@ -167,6 +167,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   >
                     Manage Appointments
                   </Link>
+                  <a
+                    href="https://www.instagram.com/cxs.naillounge?igsh=NjBidjUwY2V3cHpi&"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                  >
+                    <Instagram className="h-4 w-4" />
+                    <span>Instagram</span>
+                  </a>
                   <div className="flex items-center space-x-3">
                     <span className="text-sm text-gray-700">Welcome, {displayName}</span>
                     <button
@@ -192,6 +201,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   >
                     Reviews
                   </Link>
+                  <a
+                    href="https://www.instagram.com/cxs.naillounge?igsh=NjBidjUwY2V3cHpi&"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                  >
+                    <Instagram className="h-4 w-4" />
+                    <span>Instagram</span>
+                  </a>
                   <Link
                     to="/admin"
                     className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
@@ -303,6 +321,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   >
                     Manage Appointments
                   </Link>
+                  <a
+                    href="https://www.instagram.com/cxs.naillounge?igsh=NjBidjUwY2V3cHbi&"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Instagram className="h-5 w-5" />
+                    <span>Instagram</span>
+                  </a>
                   <div className="px-3 py-2 text-sm text-gray-600">
                     Welcome, {displayName}
                   </div>
@@ -330,6 +358,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   >
                     Reviews
                   </Link>
+                  <a
+                    href="https://www.instagram.com/cxs.naillounge?igsh=NjBidjUwY2V3cHpi&"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Instagram className="h-5 w-5" />
+                    <span>Instagram</span>
+                  </a>
                   <Link
                     to="/admin"
                     className="block bg-blue-600 text-white px-3 py-2 rounded-md text-base font-medium hover:bg-blue-700 transition-colors"
