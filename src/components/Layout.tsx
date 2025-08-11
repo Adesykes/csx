@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star, Instagram } from 'lucide-react';
+import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star, Instagram, CalendarDays } from 'lucide-react';
 import { clearAuthToken, isAuthenticated, isClient, getUser, getUserInfo, logout } from '../lib/auth';
 import { apiClient } from '../lib/api';
 import { usePendingReviews } from '../hooks/usePendingReviews';
@@ -55,6 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const adminNavLinks = [
     { href: '/admin/appointments', label: 'Appointments', icon: Calendar },
+    { href: '/admin/calendar', label: 'Calendar View', icon: CalendarDays },
     { href: '/admin/services', label: 'Services', icon: Settings },
     { href: '/admin/revenue', label: 'Revenue', icon: DollarSign },
     { href: '/admin/business-hours', label: 'Business Hours', icon: Clock },
