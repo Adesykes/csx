@@ -162,7 +162,7 @@ export class EmailService {
   </div>
   
   <h4 style="margin-bottom: 10px; color: #374151;">Contact Us</h4>
-  <p>📍 CSX Nail Lounge</p>
+  <p>📍 CXS Nail Lounge</p>
   <p>📞 Contact us for inquiries</p>
   <p>✉️ cxsnaillounge1@gmail.com</p>
 </div>
@@ -218,13 +218,16 @@ Holmewood
 S42 5SH
 
 CONTACT US:
-Address: CSX Nail Lounge
+Address: CXS Nail Lounge
+104 Heath Road
+Holmewood
+S42 5SH
 Phone: Contact us for inquiries
 Email: cxsnaillounge1@gmail.com
 
 We look forward to seeing you soon!
 
-CSX Nail Lounge Team
+CXS Nail Lounge Team
     `;
   }
 
