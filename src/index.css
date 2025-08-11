@@ -44,3 +44,128 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Mobile Calendar Optimizations */
+@layer components {
+  /* Mobile calendar adjustments */
+  @media (max-width: 768px) {
+    .rbc-calendar {
+      font-size: 12px;
+    }
+    
+    .rbc-month-view {
+      font-size: 11px;
+    }
+    
+    .rbc-header {
+      padding: 8px 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .rbc-date-cell {
+      padding: 4px 2px;
+      min-height: 40px;
+    }
+    
+    .rbc-event {
+      padding: 1px 3px;
+      font-size: 10px;
+      border-radius: 2px;
+      margin: 1px 0;
+      min-height: 18px;
+      line-height: 1.2;
+    }
+    
+    .rbc-show-more {
+      font-size: 10px;
+      padding: 2px 4px;
+      margin: 1px 0;
+      background: #f3f4f6;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    
+    /* Day view optimizations */
+    .rbc-time-view {
+      font-size: 12px;
+    }
+    
+    .rbc-time-header {
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .rbc-time-content {
+      border-top: none;
+    }
+    
+    .rbc-timeslot-group {
+      min-height: 40px;
+    }
+    
+    .rbc-time-slot {
+      border-top: 1px solid #f3f4f6;
+    }
+    
+    .rbc-current-time-indicator {
+      background-color: #ef4444;
+      height: 2px;
+      z-index: 3;
+    }
+    
+    /* Touch-friendly buttons */
+    .rbc-btn-group button {
+      min-height: 44px;
+      min-width: 44px;
+      font-size: 14px;
+      padding: 8px 12px;
+    }
+    
+    /* Month navigation */
+    .rbc-toolbar {
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .rbc-toolbar-label {
+      font-size: 18px;
+      font-weight: 700;
+      order: -1;
+    }
+    
+    /* Better spacing for events */
+    .rbc-event-content {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+  
+  /* Extra small screens */
+  @media (max-width: 480px) {
+    .rbc-calendar {
+      font-size: 11px;
+    }
+    
+    .rbc-header {
+      padding: 6px 2px;
+      font-size: 10px;
+    }
+    
+    .rbc-date-cell {
+      padding: 2px 1px;
+      min-height: 35px;
+    }
+    
+    .rbc-event {
+      font-size: 9px;
+      padding: 1px 2px;
+      min-height: 16px;
+    }
+    
+    .rbc-show-more {
+      font-size: 9px;
+      padding: 1px 2px;
+    }
+  }
+}

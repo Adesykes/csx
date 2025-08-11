@@ -4,7 +4,7 @@ import moment from 'moment';
 import { apiClient } from '../../lib/api';
 import type { Appointment } from '../../lib/api';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, User, Phone, DollarSign } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, Phone, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Setup the localizer for react-big-calendar
 const localizer = momentLocalizer(moment);
@@ -34,6 +34,24 @@ const AdminCalendar: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<AppointmentEvent | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [currentView, setCurrentView] = useState<'month' | 'week' | 'day'>('month');
+  const [isMobile, setIsMobile] = useState(false);
+  const [date, setDate] = useState(new Date());
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      // Auto-switch to agenda view on small screens
+      if (window.innerWidth < 640) {
+        setCurrentView('day');
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchAppointments();
@@ -65,7 +83,7 @@ const AdminCalendar: React.FC = () => {
     };
   });
 
-  // Custom event style based on appointment status
+  // Custom event style based on appointment status - mobile optimized
   const eventStyleGetter = (event: AppointmentEvent) => {
     const appointment = event.resource;
     let backgroundColor = '#3174ad';
@@ -96,16 +114,72 @@ const AdminCalendar: React.FC = () => {
         backgroundColor,
         borderColor,
         color: 'white',
-        fontSize: '12px',
-        padding: '2px 4px',
-        borderRadius: '3px'
+        fontSize: isMobile ? '10px' : '12px',
+        padding: isMobile ? '1px 2px' : '2px 4px',
+        borderRadius: '3px',
+        border: 'none',
+        fontWeight: 'bold'
       }
     };
+  };
+
+  // Mobile-optimized formats
+  const formats = {
+    monthHeaderFormat: isMobile ? 'MMM YYYY' : 'MMMM YYYY',
+    dayHeaderFormat: isMobile ? 'ddd M/D' : 'dddd, MMMM Do',
+    dayRangeHeaderFormat: ({ start, end }: { start: Date; end: Date }) => 
+      isMobile 
+        ? `${moment(start).format('M/D')} - ${moment(end).format('M/D')}`
+        : `${moment(start).format('MMMM Do')} - ${moment(end).format('MMMM Do')}`,
+    timeGutterFormat: isMobile ? 'h A' : 'h:mm A',
+    eventTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) => 
+      isMobile 
+        ? moment(start).format('h:mm A')
+        : `${moment(start).format('h:mm A')} - ${moment(end).format('h:mm A')}`,
   };
 
   const handleSelectEvent = (event: AppointmentEvent) => {
     setSelectedEvent(event);
     setShowModal(true);
+  };
+
+  // Handle calendar navigation
+  const handleNavigate = (newDate: Date) => {
+    setDate(newDate);
+  };
+
+  // Handle view changes
+  const handleViewChange = (view: any) => {
+    if (view === 'month' || view === 'week' || view === 'day') {
+      setCurrentView(view);
+    }
+  };
+
+  // Custom navigation for mobile
+  const navigate = (action: 'PREV' | 'NEXT' | 'TODAY') => {
+    const newDate = new Date(date);
+    
+    if (currentView === 'month') {
+      if (action === 'PREV') {
+        newDate.setMonth(newDate.getMonth() - 1);
+      } else if (action === 'NEXT') {
+        newDate.setMonth(newDate.getMonth() + 1);
+      } else {
+        setDate(new Date());
+        return;
+      }
+    } else if (currentView === 'day') {
+      if (action === 'PREV') {
+        newDate.setDate(newDate.getDate() - 1);
+      } else if (action === 'NEXT') {
+        newDate.setDate(newDate.getDate() + 1);
+      } else {
+        setDate(new Date());
+        return;
+      }
+    }
+    
+    setDate(newDate);
   };
 
   const getStatusColor = (status: string) => {
@@ -141,13 +215,46 @@ const AdminCalendar: React.FC = () => {
     <div className="max-w-7xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-sm border">
         <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <CalendarIcon className="h-8 w-8 text-blue-600" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Appointment Calendar</h1>
-              <p className="text-gray-600">Monthly view of all appointments</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CalendarIcon className="h-8 w-8 text-blue-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Appointment Calendar</h1>
+                <p className="text-gray-600">Monthly view of all appointments</p>
+              </div>
             </div>
+            
+            {/* Mobile View Toggle */}
+            {isMobile && (
+              <button
+                onClick={() => setCurrentView(currentView === 'month' ? 'day' : 'month')}
+                className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
+              >
+                {currentView === 'month' ? 'Day View' : 'Month View'}
+              </button>
+            )}
           </div>
+          
+          {/* Mobile Navigation */}
+          {isMobile && (
+            <div className="flex justify-between items-center mt-4 bg-gray-100 p-2 rounded">
+              <button
+                onClick={() => navigate('PREV')}
+                className="p-2 text-gray-600 hover:text-gray-800"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <span className="font-medium text-gray-800">
+                {moment(date).format(currentView === 'month' ? 'MMMM YYYY' : 'MMMM Do, YYYY')}
+              </span>
+              <button
+                onClick={() => navigate('NEXT')}
+                className="p-2 text-gray-600 hover:text-gray-800"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Legend */}
@@ -174,7 +281,7 @@ const AdminCalendar: React.FC = () => {
 
         {/* Calendar */}
         <div className="p-6">
-          <div style={{ height: '600px' }}>
+          <div style={{ height: isMobile ? '400px' : '600px' }}>
             <Calendar
               localizer={localizer}
               events={events}
@@ -183,9 +290,19 @@ const AdminCalendar: React.FC = () => {
               style={{ height: '100%' }}
               eventPropGetter={eventStyleGetter}
               onSelectEvent={handleSelectEvent}
-              views={['month', 'week', 'day']}
-              defaultView="month"
-              popup
+              views={isMobile ? ['month', 'day'] : ['month', 'week', 'day']}
+              view={currentView}
+              onView={handleViewChange}
+              date={date}
+              onNavigate={handleNavigate}
+              formats={formats}
+              popup={!isMobile}
+              popupOffset={isMobile ? 0 : 10}
+              step={30}
+              showMultiDayTimes
+              components={{
+                toolbar: isMobile ? () => null : undefined, // Hide default toolbar on mobile
+              }}
               tooltipAccessor={(event: AppointmentEvent) => 
                 `${event.resource.customerName} - ${event.resource.service} at ${event.resource.time}`
               }
