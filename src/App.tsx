@@ -9,6 +9,7 @@ import ReviewsPage from './pages/ReviewsPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminAppointments from './pages/admin/AdminAppointments';
 import AdminCalendar from './pages/admin/AdminCalendar';
+import AdminBookAppointment from './pages/admin/AdminBookAppointment';
 import AdminServices from './pages/admin/AdminServices';
 import AdminRevenue from './pages/admin/AdminRevenue';
 import AdminBusinessHours from './pages/admin/AdminBusinessHours';
@@ -69,6 +70,11 @@ function App() {
           <Route path="/admin/calendar" element={
             <AuthGuard requireAdmin={true}>
               <AdminCalendar />
+            </AuthGuard>
+          } />
+          <Route path="/admin/book-appointment" element={
+            <AuthGuard requireAdmin={true}>
+              <AdminBookAppointment />
             </AuthGuard>
           } />
           <Route path="/admin/services" element={
