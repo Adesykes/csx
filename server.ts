@@ -1030,6 +1030,7 @@ app.patch('/api/appointments/:id/change', async (req, res) => {
       { 
         $set: { 
           status: 'cancelled',
+          paymentStatus: 'cancelled',
           updatedAt: new Date(),
           cancellationReason: 'Changed to new appointment'
         }
@@ -1129,6 +1130,7 @@ app.patch('/api/appointments/:id/cancel', async (req, res) => {
       { 
         $set: { 
           status: 'cancelled',
+          paymentStatus: 'cancelled',
           updatedAt: new Date()
         }
       }
