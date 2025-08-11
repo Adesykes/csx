@@ -146,7 +146,7 @@ export class EmailService {
             <h4 style="margin-top: 0; color: #92400e;">Important Information</h4>
             <p style="margin-bottom: 0; color: #92400e;">
               • Please arrive 5 minutes before your appointment time<br>
-              • If you need to cancel or reschedule, please give us at least 24 hours notice<br>
+              • If you need to cancel or reschedule, please give us at least 48 hours notice<br>
               • ${booking.paymentMethod === 'cash' ? 'Please bring exact cash amount' : 'Bank transfer details will be provided separately'}
             </p>
           </div>
@@ -199,7 +199,7 @@ TOTAL: £${booking.totalPrice.toFixed(2)}
 
 IMPORTANT INFORMATION:
 • Please arrive 5 minutes before your appointment time
-• If you need to cancel or reschedule, please give us at least 24 hours notice
+• If you need to cancel or reschedule, please give us at least 48 hours notice
 • ${booking.paymentMethod === 'cash' ? 'Please bring exact cash amount' : 'Bank transfer details will be provided separately'}
 
 CONTACT US:
