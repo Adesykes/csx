@@ -186,6 +186,15 @@ class ApiClient {
     return response;
   }
 
+  async updatePassword(email: string, newPassword: string): Promise<{ message: string }> {
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    return this.request<{ message: string }>('/api/auth', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'update-password', email: normalizedEmail, newPassword }),
+    });
+  }
+
   logout(): void {
     this.token = null;
     localStorage.removeItem('authToken');

@@ -203,6 +203,35 @@ app.post('/api/auth', async (req, res) => {
           }
         });
 
+      case 'update-password':
+        const { newPassword } = req.body;
+        
+        if (!email || !newPassword) {
+          return res.status(400).json({ error: 'Email and new password are required' });
+        }
+
+        if (newPassword.length < 6) {
+          return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        }
+
+        const userToUpdate = await usersCollection.findOne({ email });
+        if (!userToUpdate) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Only allow password update for client users
+        if (userToUpdate.role !== 'client') {
+          return res.status(400).json({ error: 'Password update is only available for customer accounts' });
+        }
+
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        await usersCollection.updateOne(
+          { email },
+          { $set: { password: hashedNewPassword } }
+        );
+
+        return res.json({ message: 'Password updated successfully' });
+
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }

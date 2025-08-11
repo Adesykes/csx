@@ -3,6 +3,7 @@ import cors from 'cors';
 import * as dotenv from 'dotenv';
 import { getDatabase } from './lib/mongodb.js';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { ObjectId } from 'mongodb';
 import { sendBookingConfirmationEmail } from './api/send-confirmation-email';
 
@@ -138,6 +139,151 @@ app.get('/ping', async (req, res) => {
       database: 'error',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
+  }
+});
+
+// Consolidated auth endpoint (matching development setup)
+app.post('/api/auth', async (req, res) => {
+  try {
+    const { action, email, password, name, newPassword } = req.body;
+
+    if (!action) {
+      return res.status(400).json({ error: 'Action is required' });
+    }
+
+    const db = await getDatabase();
+    const usersCollection = db.collection('users');
+
+    switch (action) {
+      case 'admin-login':
+        if (!email || !password) {
+          return res.status(400).json({ error: 'Email and password are required' });
+        }
+
+        // Check against environment variables for admin
+        if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
+          return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const adminToken = jwt.sign({
+          userId: 'admin',
+          email: process.env.ADMIN_EMAIL,
+          role: 'admin'
+        }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
+
+        return res.json({
+          token: adminToken,
+          user: {
+            id: 'admin',
+            email: process.env.ADMIN_EMAIL,
+            role: 'admin'
+          }
+        });
+
+      case 'client-login':
+        if (!email || !password) {
+          return res.status(400).json({ error: 'Email and password are required' });
+        }
+
+        const clientUser = await usersCollection.findOne({ email });
+        if (!clientUser) {
+          return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const clientPasswordValid = await bcrypt.compare(password, clientUser.password);
+        if (!clientPasswordValid) {
+          return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const clientToken = jwt.sign(
+          { userId: clientUser._id, email: clientUser.email, role: clientUser.role },
+          process.env.JWT_SECRET || 'default_secret',
+          { expiresIn: '7d' }
+        );
+
+        return res.json({
+          token: clientToken,
+          user: {
+            id: clientUser._id,
+            email: clientUser.email,
+            name: clientUser.name,
+            role: clientUser.role
+          }
+        });
+
+      case 'client-signup':
+        if (!name || !email || !password) {
+          return res.status(400).json({ error: 'Name, email, and password are required' });
+        }
+
+        if (password.length < 6) {
+          return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        }
+
+        const existingUser = await usersCollection.findOne({ email });
+        if (existingUser) {
+          return res.status(400).json({ error: 'User with this email already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = {
+          name,
+          email,
+          password: hashedPassword,
+          role: 'client',
+          createdAt: new Date()
+        };
+
+        const result = await usersCollection.insertOne(newUser);
+        const signupToken = jwt.sign(
+          { userId: result.insertedId, email, role: 'client' },
+          process.env.JWT_SECRET || 'default_secret',
+          { expiresIn: '7d' }
+        );
+
+        return res.json({
+          token: signupToken,
+          user: {
+            id: result.insertedId,
+            email,
+            name,
+            role: 'client'
+          }
+        });
+
+      case 'update-password':
+        if (!email || !newPassword) {
+          return res.status(400).json({ error: 'Email and new password are required' });
+        }
+
+        if (newPassword.length < 6) {
+          return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        }
+
+        const userToUpdate = await usersCollection.findOne({ email });
+        if (!userToUpdate) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Only allow password update for client users
+        if (userToUpdate.role !== 'client') {
+          return res.status(400).json({ error: 'Password update is only available for customer accounts' });
+        }
+
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        await usersCollection.updateOne(
+          { email },
+          { $set: { password: hashedNewPassword } }
+        );
+
+        return res.json({ message: 'Password updated successfully' });
+
+      default:
+        return res.status(400).json({ error: 'Invalid action' });
+    }
+  } catch (error) {
+    console.error('Auth error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

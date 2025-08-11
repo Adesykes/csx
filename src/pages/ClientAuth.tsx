@@ -7,6 +7,7 @@ import StarRating from '../components/StarRating';
 
 const ClientAuth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -78,10 +79,26 @@ const ClientAuth: React.FC = () => {
       return;
     }
 
+    if (isPasswordReset && password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      console.log('🔐 Attempting authentication...', { isLogin, email: email.toLowerCase(), apiBaseUrl: window.location.origin });
+      console.log('🔐 Attempting authentication...', { isLogin, isPasswordReset, email: email.toLowerCase(), apiBaseUrl: window.location.origin });
       
-      if (isLogin) {
+      if (isPasswordReset) {
+        // Password reset mode - update existing user's password
+        const response = await apiClient.updatePassword(email.toLowerCase(), password);
+        console.log('✅ Password updated successfully:', response);
+        setError('');
+        setIsPasswordReset(false);
+        setIsLogin(true);
+        setPassword('');
+        setConfirmPassword('');
+        alert('Password updated successfully! Please sign in with your new password.');
+      } else if (isLogin) {
         // Login - ensure email is lowercase
         const response = await apiClient.clientLogin(email.toLowerCase(), password);
         console.log('✅ Login successful:', response);
@@ -96,7 +113,7 @@ const ClientAuth: React.FC = () => {
       console.error('❌ Auth error:', error);
       
       // Provide more specific error messages
-      let errorMessage = error.message || `${isLogin ? 'Login' : 'Signup'} failed. Please try again.`;
+      let errorMessage = error.message || `${isPasswordReset ? 'Password update' : isLogin ? 'Login' : 'Signup'} failed. Please try again.`;
       
       if (error.message?.includes('fetch')) {
         errorMessage = 'Connection failed. Please check your internet connection and try again.';
@@ -138,10 +155,15 @@ const ClientAuth: React.FC = () => {
             <User className="h-8 w-8 text-white" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
+            {isPasswordReset ? 'Reset Password' : isLogin ? 'Welcome Back' : 'Create Account'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {isLogin ? 'Sign in to access our booking system' : 'Join CXS Nail Lounge to book appointments'}
+            {isPasswordReset 
+              ? 'Enter your email and new password' 
+              : isLogin 
+                ? 'Sign in to access our booking system' 
+                : 'Join CXS Nail Lounge to book appointments'
+            }
           </p>
           
           {/* Booking System Preview */}
@@ -199,7 +221,7 @@ const ClientAuth: React.FC = () => {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
-            {!isLogin && (
+            {!isLogin && !isPasswordReset && (
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                   Full Name
@@ -209,7 +231,7 @@ const ClientAuth: React.FC = () => {
                     id="name"
                     name="name"
                     type="text"
-                    required={!isLogin}
+                    required={!isLogin && !isPasswordReset}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="appearance-none relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm"
@@ -242,7 +264,7 @@ const ClientAuth: React.FC = () => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+                {isPasswordReset ? 'New Password' : 'Password'}
               </label>
               <div className="relative">
                 <input
@@ -254,7 +276,7 @@ const ClientAuth: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none relative block w-full px-3 py-3 pl-10 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 focus:z-10 sm:text-sm"
-                  placeholder={isLogin ? "Enter your password" : "Create a password (min 6 characters)"}
+                  placeholder={isPasswordReset ? "Enter your new password (min 6 characters)" : isLogin ? "Enter your password" : "Create a password (min 6 characters)"}
                 />
                 <Lock className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
                 <button
@@ -267,10 +289,10 @@ const ClientAuth: React.FC = () => {
               </div>
             </div>
 
-            {!isLogin && (
+            {(!isLogin || isPasswordReset) && (
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password
+                  Confirm {isPasswordReset ? 'New ' : ''}Password
                 </label>
                 <div className="relative">
                   <input
@@ -298,26 +320,8 @@ const ClientAuth: React.FC = () => {
           </div>
 
           {error && (
-            <div className={`rounded-md p-4 ${
-              error === 'You will need to sign up again' 
-                ? 'bg-blue-50 border border-blue-200' 
-                : 'bg-red-50'
-            }`}>
-              <div className={`text-sm ${
-                error === 'You will need to sign up again' 
-                  ? 'text-blue-700' 
-                  : 'text-red-700'
-              }`}>
-                {error === 'You will need to sign up again' && (
-                  <div className="flex items-center">
-                    <span className="mr-2">🔄</span>
-                    <span>
-                      <strong>Password Reset:</strong> {error}. Please create a new account below.
-                    </span>
-                  </div>
-                )}
-                {error !== 'You will need to sign up again' && error}
-              </div>
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="text-sm text-red-700">{error}</div>
             </div>
           )}
 
@@ -330,47 +334,64 @@ const ClientAuth: React.FC = () => {
               {isLoading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {isLogin ? 'Signing in...' : 'Creating account...'}
+                  {isPasswordReset ? 'Updating password...' : isLogin ? 'Signing in...' : 'Creating account...'}
                 </div>
               ) : (
-                isLogin ? 'Sign In' : 'Create Account'
+                isPasswordReset ? 'Update Password' : isLogin ? 'Sign In' : 'Create Account'
               )}
             </button>
           </div>
 
           <div className="text-center space-y-2">
-            {isLogin && (
+            {isLogin && !isPasswordReset && (
               <button
                 type="button"
                 onClick={() => {
+                  setIsPasswordReset(true);
                   setIsLogin(false);
-                  setError('You will need to sign up again');
+                  setError('');
                   setPassword('');
                   setConfirmPassword('');
                   setName('');
-                  setEmail('');
                 }}
                 className="block text-sm text-gray-600 hover:text-pink-500 font-medium mb-2"
               >
                 Forgot your password?
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError('');
-                setPassword('');
-                setConfirmPassword('');
-                setName('');
-              }}
-              className="text-sm text-pink-600 hover:text-pink-500 font-medium"
-            >
-              {isLogin 
-                ? "Don't have an account? Sign up" 
-                : "Already have an account? Sign in"
-              }
-            </button>
+            {!isPasswordReset && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError('');
+                  setPassword('');
+                  setConfirmPassword('');
+                  setName('');
+                }}
+                className="text-sm text-pink-600 hover:text-pink-500 font-medium"
+              >
+                {isLogin 
+                  ? "Don't have an account? Sign up" 
+                  : "Already have an account? Sign in"
+                }
+              </button>
+            )}
+            {isPasswordReset && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPasswordReset(false);
+                  setIsLogin(true);
+                  setError('');
+                  setPassword('');
+                  setConfirmPassword('');
+                }}
+                className="text-sm text-pink-600 hover:text-pink-500 font-medium"
+              >
+                Back to Sign In
+              </button>
+            )}
           </div>
         </form>
 
