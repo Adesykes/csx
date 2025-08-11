@@ -114,15 +114,17 @@ const ReviewsPage = (): JSX.Element => {
               </div>
             ) : (
               <div className="space-y-6">
-                {reviews.map((review) => (
-                  <ReviewCard 
-                    key={review._id || review.id} 
-                    review={{
-                      ...review,
-                      id: review._id || review.id || ''
-                    }} 
-                  />
-                ))}
+                {reviews
+                  .filter(review => review._id || review.id) // Only render reviews with valid IDs
+                  .map((review, index) => (
+                    <ReviewCard 
+                      key={review._id || review.id || `review-${index}`} // Guaranteed unique key
+                      review={{
+                        ...review,
+                        id: review._id || review.id || `generated-id-${index}` // Guaranteed valid ID
+                      }} 
+                    />
+                  ))}
               </div>
             )}
           </div>

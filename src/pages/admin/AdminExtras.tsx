@@ -241,8 +241,8 @@ const AdminExtras: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {extras.map((extra) => (
-                <tr key={extra._id || extra.id}>
+              {extras.map((extra, index) => (
+                <tr key={extra._id || extra.id || `extra-${index}`}>
                   {editingExtra && (editingExtra._id === extra._id || editingExtra.id === extra.id) ? (
                     // Edit mode
                     <>

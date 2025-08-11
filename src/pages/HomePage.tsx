@@ -472,7 +472,7 @@ const HomePage = (): JSX.Element => {
                   // Show actual services
                   services
                     .filter(service => service.duration > 0)
-                    .map((service) => {
+                    .map((service, index) => {
                       const serviceId = service._id || service.id || '';
                       const isSelected = selectedServices.some(s => {
                         const selectedId = s._id || s.id;
@@ -482,7 +482,7 @@ const HomePage = (): JSX.Element => {
                       
                       return (
                         <ServiceCard
-                          key={service._id || service.id}
+                          key={service._id || service.id || `service-${index}`}
                           service={service}
                           onSelect={handleServiceSelect}
                           isSelected={isSelected}
@@ -513,7 +513,7 @@ const HomePage = (): JSX.Element => {
                       // Show actual extras
                       services
                         .filter(service => service.duration === 0)
-                        .map((service) => {
+                        .map((service, index) => {
                           const serviceId = service._id || service.id || '';
                           const isSelected = selectedServices.some(s => {
                             const selectedId = s._id || s.id;
@@ -523,7 +523,7 @@ const HomePage = (): JSX.Element => {
                           
                           return (
                             <ServiceCard
-                              key={service._id || service.id}
+                              key={service._id || service.id || `extra-${index}`}
                               service={service}
                               onSelect={handleServiceSelect}
                               isSelected={isSelected}
@@ -542,7 +542,7 @@ const HomePage = (): JSX.Element => {
                   <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <h3 className="font-medium text-gray-900 mb-2">Selected Services:</h3>
                     <div className="space-y-2">
-                      {selectedServices.map((service) => {
+                      {selectedServices.map((service, index) => {
                         const serviceId = service._id || service.id || '';
                         const quantity = serviceQuantities.get(serviceId) || 1;
                         const isQuantityService = (service.duration === 0 || 
@@ -552,7 +552,7 @@ const HomePage = (): JSX.Element => {
                         const totalPrice = service.price * (isQuantityService ? quantity : 1);
                         
                         return (
-                          <div key={service._id || service.id} className="flex justify-between items-center text-sm">
+                          <div key={service._id || service.id || `service-${index}`} className="flex justify-between items-center text-sm">
                             <span>
                               {service.name}
                               {isQuantityService && quantity > 1 && (
