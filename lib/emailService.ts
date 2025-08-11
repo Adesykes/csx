@@ -151,11 +151,21 @@ export class EmailService {
             </p>
           </div>
           
-         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
-  <h4>Contact Us</h4>
+         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+  <h4 style="margin-bottom: 15px; color: #374151;">📍 Directions</h4>
+  <div style="background: #f0f9ff; border: 1px solid #0ea5e9; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+    <p style="margin: 0; color: #0c4a6e; font-weight: 500;">
+      104 Heath Road<br>
+      Holmewood<br>
+      S42 5SH
+    </p>
+  </div>
+  
+  <h4 style="margin-bottom: 10px; color: #374151;">Contact Us</h4>
   <p>📍 CSX Nail Lounge</p>
   <p>📞 Contact us for inquiries</p>
   <p>✉️ cxsnaillounge1@gmail.com</p>
+</div>
 
           <p style="text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px;">
             We look forward to seeing you soon!<br>
@@ -201,6 +211,11 @@ IMPORTANT INFORMATION:
 • Please arrive 5 minutes before your appointment time
 • If you need to cancel or reschedule, please give us at least 48 hours notice
 • ${booking.paymentMethod === 'cash' ? 'Please bring exact cash amount' : 'Bank transfer details will be provided separately'}
+
+DIRECTIONS:
+104 Heath Road
+Holmewood
+S42 5SH
 
 CONTACT US:
 Address: CSX Nail Lounge
