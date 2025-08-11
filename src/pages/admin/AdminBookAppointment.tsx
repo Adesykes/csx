@@ -364,44 +364,69 @@ const AdminBookAppointment: React.FC = () => {
               </select>
             </div>
 
-            {/* Extras */}
+            {/* Extras with Checkboxes */}
             {extras.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
                   Additional Services (Optional)
                 </label>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-3">
                   {extras.map((extra) => (
-                    <div key={extra._id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                    <div key={extra._id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{extra.name}</h4>
-                        <p className="text-sm text-gray-600">{extra.description}</p>
-                        <p className="text-sm font-semibold text-green-600">£{extra.price.toFixed(2)}</p>
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`extra-${extra._id}`}
+                            checked={formData.extras.some(e => e.id === extra._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  extras: [...prev.extras, { id: extra._id, name: extra.name, price: extra.price }]
+                                }));
+                              } else {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  extras: prev.extras.filter(e => e.id !== extra._id)
+                                }));
+                              }
+                            }}
+                            className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor={`extra-${extra._id}`} className="cursor-pointer flex-1">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="font-medium text-gray-900">{extra.name}</h4>
+                                {extra.description && (
+                                  <p className="text-sm text-gray-600">{extra.description}</p>
+                                )}
+                              </div>
+                              <span className="text-lg font-semibold text-green-600 ml-4">
+                                £{extra.price.toFixed(2)}
+                              </span>
+                            </div>
+                          </label>
+                        </div>
                       </div>
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.extras.some(e => e.id === extra._id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFormData(prev => ({
-                                ...prev,
-                                extras: [...prev.extras, { id: extra._id, name: extra.name, price: extra.price }]
-                              }));
-                            } else {
-                              setFormData(prev => ({
-                                ...prev,
-                                extras: prev.extras.filter(e => e.id !== extra._id)
-                              }));
-                            }
-                          }}
-                          className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <span className="text-sm text-gray-700">Add this service</span>
-                      </label>
                     </div>
                   ))}
                 </div>
+                
+                {/* Selected Extras Summary */}
+                {formData.extras.length > 0 && (
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="text-sm font-medium text-blue-900 mb-2">Selected Additional Services:</h4>
+                    <div className="space-y-1">
+                      {formData.extras.map((extra) => (
+                        <div key={extra.id} className="flex justify-between text-sm">
+                          <span className="text-blue-800">{extra.name}</span>
+                          <span className="text-blue-900 font-medium">£{extra.price.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
