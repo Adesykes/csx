@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import { body, validationResult, param } from 'express-validator';
 import { getDatabase } from './lib/mongodb.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -55,9 +58,61 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'", "https://api.stripe.com"]
+    }
+  },
+  crossOriginEmbedderPolicy: false // Allow embedding for Stripe
+}));
+
+// Rate limiting
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    error: 'Too many requests from this IP, please try again later.',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit auth attempts to 5 per windowMs
+  message: {
+    error: 'Too many authentication attempts, please try again later.',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const strictLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // Limit sensitive operations to 10 per hour
+  message: {
+    error: 'Too many sensitive operations, please try again later.',
+    retryAfter: '1 hour'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Apply general rate limiting to all requests
+app.use(generalLimiter);
+
 app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' })); // Add size limit
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Debug middleware to log all requests
 app.use((req, res, next) => {
@@ -95,6 +150,41 @@ app.options('*', (req, res) => {
     res.sendStatus(403);
   }
 });
+
+// Validation middleware helpers
+const handleValidationErrors = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      details: errors.array().map(err => ({
+        field: err.type === 'field' ? err.path : 'unknown',
+        message: err.msg
+      }))
+    });
+  }
+  next();
+};
+
+// Common validation rules
+const emailValidation = body('email')
+  .isEmail()
+  .normalizeEmail()
+  .withMessage('Valid email is required');
+
+const passwordValidation = body('password')
+  .isLength({ min: 6, max: 128 })
+  .withMessage('Password must be between 6 and 128 characters');
+
+const nameValidation = body('name')
+  .isLength({ min: 1, max: 100 })
+  .trim()
+  .escape()
+  .withMessage('Name must be between 1 and 100 characters');
+
+const actionValidation = body('action')
+  .isIn(['admin-login', 'client-login', 'client-signup', 'update-password'])
+  .withMessage('Invalid action specified');
 
 // Auth middleware
 const authMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -147,8 +237,60 @@ app.get('/ping', async (req, res) => {
   }
 });
 
+// Conditional validation based on action
+const conditionalAuthValidation = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const { action } = req.body;
+  
+  // Define validation rules for each action
+  const validations: Promise<any>[] = [];
+  
+  switch (action) {
+    case 'admin-login':
+    case 'client-login':
+      validations.push(
+        emailValidation.run(req),
+        passwordValidation.run(req)
+      );
+      break;
+    case 'client-signup':
+      validations.push(
+        nameValidation.run(req),
+        emailValidation.run(req),
+        passwordValidation.run(req)
+      );
+      break;
+    case 'update-password':
+      validations.push(
+        emailValidation.run(req),
+        body('newPassword').isLength({ min: 6, max: 128 }).withMessage('New password must be between 6 and 128 characters').run(req)
+      );
+      break;
+  }
+  
+  Promise.all(validations).then(() => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: errors.array().map(err => ({
+          field: err.type === 'field' ? err.path : 'unknown',
+          message: err.msg
+        }))
+      });
+    }
+    next();
+  }).catch(() => {
+    res.status(500).json({ error: 'Validation error' });
+  });
+};
+
 // Consolidated auth endpoint (matching development setup)
-app.post('/api/auth', async (req, res) => {
+app.post('/api/auth', 
+  authLimiter, // Apply strict rate limiting to auth
+  actionValidation,
+  handleValidationErrors,
+  conditionalAuthValidation,
+  async (req, res) => {
   try {
     const { action, email, password, name, newPassword } = req.body;
 
@@ -293,7 +435,12 @@ app.post('/api/auth', async (req, res) => {
 });
 
 // Login endpoint
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', 
+  authLimiter,
+  emailValidation,
+  passwordValidation,
+  handleValidationErrors,
+  async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -625,7 +772,18 @@ app.get('/api/appointments', authMiddleware, async (req, res) => {
   }
 });
 
-app.post('/api/appointments', async (req, res) => {
+app.post('/api/appointments',
+  strictLimiter, // Strict rate limiting for booking appointments
+  body('customerName').isLength({ min: 1, max: 100 }).trim().escape().withMessage('Customer name is required'),
+  body('customerEmail').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('customerPhone').isMobilePhone('any').withMessage('Valid phone number is required'),
+  body('date').isISO8601().toDate().withMessage('Valid date is required'),
+  body('time').matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Valid time format required (HH:MM)'),
+  body('service').isLength({ min: 1, max: 200 }).trim().escape().withMessage('Service is required'),
+  body('servicePrice').isNumeric().withMessage('Service price must be numeric'),
+  body('totalPrice').isNumeric().withMessage('Total price must be numeric'),
+  handleValidationErrors,
+  async (req, res) => {
   try {
     const { customerName, customerEmail, customerPhone, date, time, service, servicePrice, extras, totalPrice, paymentMethod } = req.body;
     

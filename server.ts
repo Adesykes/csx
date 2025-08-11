@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import { body, validationResult, param } from 'express-validator';
 import { getDatabase } from './lib/mongodb-simple.js';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
@@ -55,9 +58,78 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 
+// Security middleware (relaxed for development)
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabled for development
+  crossOriginEmbedderPolicy: false
+}));
+
+// Rate limiting (more relaxed for development)
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // More generous limit for development
+  message: {
+    error: 'Too many requests from this IP, please try again later.',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV === 'development' // Skip in development
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // More generous for development testing
+  message: {
+    error: 'Too many authentication attempts, please try again later.',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV === 'development'
+});
+
+// Apply general rate limiting
+app.use(generalLimiter);
+
 app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Validation middleware helpers
+const handleValidationErrors = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      details: errors.array().map(err => ({
+        field: err.type === 'field' ? err.path : 'unknown',
+        message: err.msg
+      }))
+    });
+  }
+  next();
+};
+
+// Common validation rules
+const emailValidation = body('email')
+  .isEmail()
+  .normalizeEmail()
+  .withMessage('Valid email is required');
+
+const passwordValidation = body('password')
+  .isLength({ min: 6, max: 128 })
+  .withMessage('Password must be between 6 and 128 characters');
+
+const nameValidation = body('name')
+  .isLength({ min: 1, max: 100 })
+  .trim()
+  .escape()
+  .withMessage('Name must be between 1 and 100 characters');
+
+const actionValidation = body('action')
+  .isIn(['admin-login', 'client-login', 'signup', 'update-password'])
+  .withMessage('Invalid action specified');
 
 // Auth middleware
 const authMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
