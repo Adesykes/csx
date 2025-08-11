@@ -26,7 +26,7 @@ export interface Appointment {
   time: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   paymentMethod: 'cash' | 'bank_transfer';
-  paymentStatus: 'pending' | 'paid' | 'refunded';
+  paymentStatus: 'pending' | 'paid' | 'refunded' | 'cancelled';
   servicePrice: number;
   notes?: string;
 }

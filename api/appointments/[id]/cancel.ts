@@ -61,6 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       { 
         $set: { 
           status: 'cancelled',
+          paymentStatus: 'cancelled',
           updatedAt: new Date()
         }
       }

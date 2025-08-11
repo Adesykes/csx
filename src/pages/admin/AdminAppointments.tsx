@@ -13,7 +13,7 @@ interface AppointmentData extends Appointment {
   time: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   paymentMethod: 'cash' | 'bank_transfer';
-  paymentStatus: 'pending' | 'paid' | 'refunded';
+  paymentStatus: 'pending' | 'paid' | 'refunded' | 'cancelled';
   servicePrice: number;
 }
 
@@ -279,6 +279,7 @@ const AdminAppointments: React.FC = () => {
                 <option value="pending">Pending</option>
                 <option value="paid">Paid</option>
                 <option value="refunded">Refunded</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
 
@@ -474,6 +475,7 @@ const AdminAppointments: React.FC = () => {
                   <span className={`px-2 py-1 rounded-full text-sm ${
                     appointment.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
                     appointment.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    appointment.paymentStatus === 'cancelled' ? 'bg-gray-100 text-gray-800' :
                     'bg-red-100 text-red-800'
                   }`}>
                     {appointment.paymentStatus}

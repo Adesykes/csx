@@ -25,7 +25,7 @@ export interface Appointment {
   startTime: string;
   endTime: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-  paymentStatus: 'pending' | 'paid' | 'refunded';
+  paymentStatus: 'pending' | 'paid' | 'refunded' | 'cancelled';
   paymentIntentId?: string;
   notes?: string;
   createdAt: string;
