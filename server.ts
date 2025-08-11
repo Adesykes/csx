@@ -865,7 +865,7 @@ app.get('/api/appointments/customer', async (req, res) => {
 app.patch('/api/appointments/:id/change', async (req, res) => {
   try {
     const { id } = req.params;
-    const { appointmentDate, startTime, endTime, serviceId, serviceName, servicePrice } = req.body;
+    const { appointmentDate, startTime, endTime, serviceId, serviceName, servicePrice, paymentMethod, paymentStatus } = req.body;
     const db = await getDatabase();
     const appointmentsCollection = db.collection('appointments');
     
@@ -935,7 +935,6 @@ app.patch('/api/appointments/:id/change', async (req, res) => {
       customerName: originalAppointment.customerName,
       customerEmail: originalAppointment.customerEmail,
       customerPhone: originalAppointment.customerPhone,
-      paymentStatus: originalAppointment.paymentStatus,
       paymentIntentId: originalAppointment.paymentIntentId,
       notes: originalAppointment.notes,
       
@@ -946,6 +945,8 @@ app.patch('/api/appointments/:id/change', async (req, res) => {
       serviceId: serviceId || originalAppointment.serviceId,
       service: serviceName || 'Service', // Direct assignment - serviceName should be 'Gel Nails'
       servicePrice: servicePrice || originalAppointment.servicePrice,
+      paymentMethod: paymentMethod || originalAppointment.paymentMethod || 'cash', // Include payment method
+      paymentStatus: paymentStatus || originalAppointment.paymentStatus || 'pending', // Include payment status
       
       // Set status and metadata
       status: 'pending',

@@ -157,7 +157,9 @@ const BookingForm: React.FC<BookingFormProps> = ({
           startTime: selectedTime,
           endTime: calculateEndTime(selectedTime, totalDuration),
           serviceName: effectiveServiceNames, // Use the effective service name
-          servicePrice: effectiveTotalPrice
+          servicePrice: effectiveTotalPrice,
+          paymentMethod: paymentMethod, // Include payment method
+          paymentStatus: paymentMethod === 'cash' ? 'pending' : 'pending' // Include payment status
         });
         
         // Clear the appointment change data from sessionStorage

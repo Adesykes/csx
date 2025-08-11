@@ -270,6 +270,8 @@ class ApiClient {
     serviceId?: string;
     serviceName?: string;
     servicePrice?: number;
+    paymentMethod?: string;
+    paymentStatus?: string;
   }) {
     return this.request<{ 
       message: string; 
