@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { addDays, startOfDay, format } from 'date-fns';
 import { apiClient } from '../lib/api';
 import { Service } from '../types';
@@ -22,6 +22,7 @@ type BookingStep = 'service' | 'datetime' | 'details' | 'confirmation';
 
 const HomePage = (): JSX.Element => {
   const location = useLocation();
+  const navigate = useNavigate();
   
   // State management
   const [currentStep, setCurrentStep] = useState<BookingStep>('service');
@@ -248,7 +249,7 @@ const HomePage = (): JSX.Element => {
   const resetBooking = useCallback(() => {
     if (isChangingAppointment) {
       // If changing appointment, redirect back to manage appointments page
-      window.location.href = '/cancel';
+      navigate('/cancel');
     } else {
       // Normal reset for new booking
       setCurrentStep('service');
@@ -258,7 +259,7 @@ const HomePage = (): JSX.Element => {
       setBookingSuccess(false);
       setAvailableSlots([]); // Clear available slots when resetting
     }
-  }, [isChangingAppointment]);
+  }, [isChangingAppointment, navigate]);
 
   // Load services and business hours on mount
   useEffect(() => {
@@ -409,7 +410,7 @@ const HomePage = (): JSX.Element => {
                 <button
                   onClick={() => {
                     sessionStorage.removeItem('appointmentToChange');
-                    window.location.href = '/cancel';
+                    navigate('/cancel');
                   }}
                   className="mt-3 text-sm text-blue-600 hover:text-blue-800 underline"
                 >
@@ -719,7 +720,7 @@ const HomePage = (): JSX.Element => {
                 
                 {isChangingAppointment && (
                   <button
-                    onClick={() => window.location.href = '/'}
+                    onClick={() => navigate('/')}
                     className="bg-gray-100 text-gray-700 px-6 py-3 rounded-md hover:bg-gray-200 transition-colors font-medium"
                   >
                     Go to Homepage

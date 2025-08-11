@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { Search, Calendar, Clock, User, Phone, Mail, X, Edit } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { apiClient, Appointment } from '../lib/api';
@@ -15,6 +16,7 @@ const CancelAppointment: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [searchPerformed, setSearchPerformed] = useState(false);
+  const navigate = useNavigate();
 
   const { register, handleSubmit, formState: { errors }, watch } = useForm<SearchForm>();
 
@@ -137,8 +139,8 @@ const CancelAppointment: React.FC = () => {
     // Store in sessionStorage so it persists across navigation
     sessionStorage.setItem('appointmentToChange', JSON.stringify(changeData));
     
-    // Navigate to booking page with a change indicator
-    window.location.href = '/booking?changing=true';
+    // Navigate to booking page with a change indicator using React Router
+    navigate('/booking?changing=true');
   };
 
   const formatDate = (dateStr: string) => {
