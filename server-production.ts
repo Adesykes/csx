@@ -10,6 +10,12 @@ import { sendBookingConfirmationEmail } from './api/send-confirmation-email';
 // Load environment variables
 dotenv.config();
 
+// Critical security validation - fail fast if JWT secret is missing
+if (!process.env.JWT_SECRET) {
+  console.error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable is required');
+  process.exit(1);
+}
+
 // Initialize express app
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -78,7 +84,7 @@ app.options('*', (req, res) => {
       ];
   
   if (!origin || allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Origin', origin || allowedOrigins[0]);
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -99,7 +105,7 @@ const authMiddleware = async (req: express.Request, res: express.Response, next:
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
     (req as any).user = decoded;
     next();
   } catch (error) {
@@ -133,11 +139,10 @@ app.get('/ping', async (req, res) => {
     });
   } catch (error) {
     console.error('Database ping failed:', error);
-    res.status(200).json({ 
-      message: 'pong',
+    res.status(500).json({ 
+      message: 'Database connection error',
       timestamp: new Date().toISOString(),
-      database: 'error',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      database: 'error'
     });
   }
 });
@@ -169,7 +174,7 @@ app.post('/api/auth', async (req, res) => {
           userId: 'admin',
           email: process.env.ADMIN_EMAIL,
           role: 'admin'
-        }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
+        }, process.env.JWT_SECRET!, { expiresIn: '24h' });
 
         return res.json({
           token: adminToken,
@@ -197,7 +202,7 @@ app.post('/api/auth', async (req, res) => {
 
         const clientToken = jwt.sign(
           { userId: clientUser._id, email: clientUser.email, role: clientUser.role },
-          process.env.JWT_SECRET || 'default_secret',
+          process.env.JWT_SECRET!,
           { expiresIn: '7d' }
         );
 
@@ -237,7 +242,7 @@ app.post('/api/auth', async (req, res) => {
         const result = await usersCollection.insertOne(newUser);
         const signupToken = jwt.sign(
           { userId: result.insertedId, email, role: 'client' },
-          process.env.JWT_SECRET || 'default_secret',
+          process.env.JWT_SECRET!,
           { expiresIn: '7d' }
         );
 
@@ -305,7 +310,7 @@ app.post('/api/auth/login', async (req, res) => {
       userId: 'admin',
       email: process.env.ADMIN_EMAIL,
       role: 'admin'
-    }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
+    }, process.env.JWT_SECRET!, { expiresIn: '24h' });
 
     return res.status(200).json({
       token,

@@ -10,6 +10,12 @@ import { sendBookingConfirmationEmail } from './api/send-confirmation-email';
 // Load environment variables
 dotenv.config();
 
+// Critical security validation - fail fast if JWT secret is missing in production
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  console.error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable is required in production');
+  process.exit(1);
+}
+
 // Initialize express app
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -62,7 +68,7 @@ const authMiddleware = async (req: express.Request, res: express.Response, next:
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
     (req as any).user = decoded;
     next();
   } catch (error) {
@@ -118,7 +124,7 @@ app.post('/api/auth', async (req, res) => {
 
         const adminToken = jwt.sign(
           { userId: adminUser._id, email: adminUser.email, role: adminUser.role },
-          process.env.JWT_SECRET || 'default_secret',
+          process.env.JWT_SECRET!,
           { expiresIn: '24h' }
         );
 
@@ -149,7 +155,7 @@ app.post('/api/auth', async (req, res) => {
 
         const clientToken = jwt.sign(
           { userId: clientUser._id, email: clientUser.email, role: clientUser.role },
-          process.env.JWT_SECRET || 'default_secret',
+          process.env.JWT_SECRET!,
           { expiresIn: '7d' }
         );
 
@@ -189,7 +195,7 @@ app.post('/api/auth', async (req, res) => {
         const result = await usersCollection.insertOne(newUser);
         const signupToken = jwt.sign(
           { userId: result.insertedId, email, role: 'client' },
-          process.env.JWT_SECRET || 'default_secret',
+          process.env.JWT_SECRET!,
           { expiresIn: '7d' }
         );
 
@@ -261,7 +267,7 @@ app.post('/api/auth/login', async (req, res) => {
         userId: 'admin',
         email: process.env.ADMIN_EMAIL,
         role: 'admin'
-      }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
+      }, process.env.JWT_SECRET!, { expiresIn: '24h' });
 
       return res.status(200).json({
         token,
@@ -312,7 +318,7 @@ app.post('/api/auth/client-login', async (req, res) => {
       userId: user._id.toString(),
       email: user.email,
       role: user.role || 'client'
-    }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '7d' }); // Longer expiry for clients
+    }, process.env.JWT_SECRET!, { expiresIn: '7d' }); // Longer expiry for clients
     
     return res.status(200).json({
       token,
@@ -380,7 +386,7 @@ app.post('/api/auth/client-signup', async (req, res) => {
       userId: result.insertedId.toString(),
       email: newUser.email,
       role: 'client'
-    }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '7d' });
+    }, process.env.JWT_SECRET!, { expiresIn: '7d' });
     
     return res.status(201).json({
       token,
