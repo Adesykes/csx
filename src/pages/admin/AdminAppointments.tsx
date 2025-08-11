@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { Check, DollarSign, CreditCard, Banknote, X, Trash2, Building2, Mail, Phone, Filter, Search, Calendar } from 'lucide-react';
+import { Check, DollarSign, CreditCard, Banknote, X, Trash2, Building2, Mail, Phone, Filter, Search, Calendar, Edit3, Save, XCircle } from 'lucide-react';
 import { apiClient } from '../../lib/api';
 import type { Appointment } from '../../lib/api';
 
@@ -30,6 +30,16 @@ const AdminAppointments: React.FC = () => {
     dateTo: ''
   });
   const [showFilters, setShowFilters] = useState(false);
+
+  // Editing states
+  const [editingAppointment, setEditingAppointment] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<{
+    paymentMethod: 'cash' | 'bank_transfer';
+    servicePrice: number;
+  }>({
+    paymentMethod: 'cash',
+    servicePrice: 0
+  });
 
   // Filtered appointments using useMemo for performance
   const filteredAppointments = useMemo(() => {
@@ -122,7 +132,7 @@ const AdminAppointments: React.FC = () => {
       if (status === 'cancelled') {
         await apiClient.cancelAppointment(appointmentId);
       } else {
-        await apiClient.updateAppointment(appointmentId, status);
+        await apiClient.updateAppointment(appointmentId, { status });
       }
       await fetchAppointments();
       if (status === 'completed') {
@@ -131,6 +141,37 @@ const AdminAppointments: React.FC = () => {
     } catch (error) {
       console.error('Error updating appointment status:', error);
       alert('Failed to update appointment status. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startEditing = (appointment: AppointmentData) => {
+    setEditingAppointment(appointment._id);
+    setEditValues({
+      paymentMethod: appointment.paymentMethod,
+      servicePrice: appointment.servicePrice
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingAppointment(null);
+    setEditValues({ paymentMethod: 'cash', servicePrice: 0 });
+  };
+
+  const savePaymentDetails = async (appointmentId: string) => {
+    setLoading(true);
+    try {
+      await apiClient.updateAppointment(appointmentId, {
+        paymentMethod: editValues.paymentMethod,
+        servicePrice: editValues.servicePrice
+      });
+      await fetchAppointments();
+      setEditingAppointment(null);
+      alert('Payment details updated successfully!');
+    } catch (error) {
+      console.error('Error updating payment details:', error);
+      alert('Failed to update payment details. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -369,26 +410,62 @@ const AdminAppointments: React.FC = () => {
                   {format(new Date(appointment.date), 'MMM d, yyyy')}
                 </td>
                 <td className="py-2 px-4 border-b">{appointment.time}</td>
-                <td className="py-2 px-4 border-b">${appointment.servicePrice}</td>
                 <td className="py-2 px-4 border-b">
-                  <div className="flex items-center">
-                    {appointment.paymentMethod === 'cash' ? (
-                      <>
-                        <Banknote className="h-4 w-4 mr-1 text-green-600" />
-                        <span>Cash</span>
-                      </>
-                    ) : appointment.paymentMethod === 'bank_transfer' ? (
-                      <>
-                        <Building2 className="h-4 w-4 mr-1 text-blue-600" />
-                        <span>Bank Transfer</span>
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard className="h-4 w-4 mr-1 text-gray-600" />
-                        <span>Other</span>
-                      </>
-                    )}
-                  </div>
+                  {editingAppointment === appointment._id ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">$</span>
+                      <input
+                        type="number"
+                        value={editValues.servicePrice}
+                        onChange={(e) => setEditValues({ ...editValues, servicePrice: parseFloat(e.target.value) || 0 })}
+                        className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between group">
+                      <span>${appointment.servicePrice}</span>
+                      <button
+                        onClick={() => startEditing(appointment)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-blue-600 transition-opacity"
+                        title="Edit price and payment method"
+                      >
+                        <Edit3 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </td>
+                <td className="py-2 px-4 border-b">
+                  {editingAppointment === appointment._id ? (
+                    <select
+                      value={editValues.paymentMethod}
+                      onChange={(e) => setEditValues({ ...editValues, paymentMethod: e.target.value as 'cash' | 'bank_transfer' })}
+                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="cash">Cash</option>
+                      <option value="bank_transfer">Bank Transfer</option>
+                    </select>
+                  ) : (
+                    <div className="flex items-center">
+                      {appointment.paymentMethod === 'cash' ? (
+                        <>
+                          <Banknote className="h-4 w-4 mr-1 text-green-600" />
+                          <span>Cash</span>
+                        </>
+                      ) : appointment.paymentMethod === 'bank_transfer' ? (
+                        <>
+                          <Building2 className="h-4 w-4 mr-1 text-blue-600" />
+                          <span>Bank Transfer</span>
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="h-4 w-4 mr-1 text-gray-600" />
+                          <span>Other</span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </td>
                 <td className="py-2 px-4 border-b">
                   <span className={`px-2 py-1 rounded-full text-sm ${
@@ -414,46 +491,69 @@ const AdminAppointments: React.FC = () => {
                 </td>
                 <td className="py-2 px-4 border-b">
                   <div className="flex items-center gap-2">
-                    {(appointment.paymentMethod === 'cash' || appointment.paymentMethod === 'bank_transfer') && appointment.paymentStatus === 'pending' && (
-                      <button
-                        onClick={() => markPaymentReceived(appointment._id)}
-                        disabled={loading}
-                        className="flex items-center px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 text-sm"
-                      >
-                        <DollarSign className="h-4 w-4 mr-1" />
-                        {appointment.paymentMethod === 'cash' ? 'Mark Cash Paid' : 'Mark Transfer Received'}
-                      </button>
+                    {editingAppointment === appointment._id ? (
+                      <>
+                        <button
+                          onClick={() => savePaymentDetails(appointment._id)}
+                          disabled={loading}
+                          className="flex items-center px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 text-sm"
+                        >
+                          <Save className="h-3 w-3 mr-1" />
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelEditing}
+                          disabled={loading}
+                          className="flex items-center px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50 text-sm"
+                        >
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {(appointment.paymentMethod === 'cash' || appointment.paymentMethod === 'bank_transfer') && appointment.paymentStatus === 'pending' && (
+                          <button
+                            onClick={() => markPaymentReceived(appointment._id)}
+                            disabled={loading}
+                            className="flex items-center px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 text-sm"
+                          >
+                            <DollarSign className="h-4 w-4 mr-1" />
+                            {appointment.paymentMethod === 'cash' ? 'Mark Cash Paid' : 'Mark Transfer Received'}
+                          </button>
+                        )}
+                        {appointment.paymentStatus === 'paid' && (
+                          <div className="flex items-center text-green-600 text-sm">
+                            <Check className="h-4 w-4 mr-1" />
+                            Paid
+                          </div>
+                        )}
+                        {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
+                          <button
+                            onClick={() => cancelAppointment(appointment._id, appointment.customerName)}
+                            disabled={loading}
+                            className="flex items-center px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 text-sm"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Cancel
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteAppointment(
+                            appointment._id, 
+                            appointment.customerName, 
+                            appointment.service, 
+                            format(new Date(appointment.date), 'MMM d, yyyy')
+                          )}
+                          disabled={loading}
+                          className="flex items-center px-3 py-1 bg-red-800 text-white rounded hover:bg-red-900 disabled:opacity-50 text-sm border border-red-900"
+                          title="Permanently delete this appointment"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </button>
+                      </>
                     )}
-                    {appointment.paymentStatus === 'paid' && (
-                      <div className="flex items-center text-green-600 text-sm">
-                        <Check className="h-4 w-4 mr-1" />
-                        Paid
-                      </div>
-                    )}
-                    {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
-                      <button
-                        onClick={() => cancelAppointment(appointment._id, appointment.customerName)}
-                        disabled={loading}
-                        className="flex items-center px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 text-sm"
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Cancel
-                      </button>
-                    )}
-                    <button
-                      onClick={() => deleteAppointment(
-                        appointment._id, 
-                        appointment.customerName, 
-                        appointment.service, 
-                        format(new Date(appointment.date), 'MMM d, yyyy')
-                      )}
-                      disabled={loading}
-                      className="flex items-center px-3 py-1 bg-red-800 text-white rounded hover:bg-red-900 disabled:opacity-50 text-sm border border-red-900"
-                      title="Permanently delete this appointment"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Delete
-                    </button>
                   </div>
                 </td>
               </tr>

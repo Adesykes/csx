@@ -26,6 +26,8 @@ export interface Appointment {
   time: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   paymentMethod: 'cash' | 'bank_transfer';
+  paymentStatus: 'pending' | 'paid' | 'refunded';
+  servicePrice: number;
   notes?: string;
 }
 
@@ -239,10 +241,10 @@ class ApiClient {
     });
   }
 
-  async updateAppointment(appointmentId: string, status: Appointment['status']) {
+  async updateAppointment(appointmentId: string, updates: Partial<Appointment>) {
     return this.request<Appointment>(`/api/appointments/${appointmentId}`, {
       method: 'PUT',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(updates),
     });
   }
 
