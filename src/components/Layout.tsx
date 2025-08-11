@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star } from 'lucide-react';
-import { clearAuthToken, isAuthenticated, isClient, getUser, getUserInfo } from '../lib/auth';
+import { clearAuthToken, isAuthenticated, isClient, getUser, getUserInfo, logout } from '../lib/auth';
 import { apiClient } from '../lib/api';
 
 interface LayoutProps {
@@ -111,7 +111,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </Link>
                   <button
                     onClick={() => {
-                      apiClient.logout();
+                      logout();
                     }}
                     className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:text-red-900 hover:bg-red-50"
                   >
@@ -155,7 +155,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <span className="text-sm text-gray-700">Welcome, {displayName}</span>
                     <button
                       onClick={() => {
-                        apiClient.logout();
+                        logout();
                       }}
                       className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:text-red-900 hover:bg-red-50"
                     >
@@ -238,7 +238,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <button
                     onClick={() => {
                       setIsMobileMenuOpen(false);
-                      apiClient.logout();
+                      logout();
                     }}
                     className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-900 hover:bg-red-50 w-full text-left"
                   >
