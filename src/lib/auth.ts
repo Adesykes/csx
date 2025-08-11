@@ -2,6 +2,8 @@ export interface JWTPayload {
   userId: string;
   email: string;
   role: string;
+  exp?: number; // Standard JWT expiration field
+  iat?: number; // Standard JWT issued at field
 }
 
 export interface UserInfo {
@@ -102,7 +104,30 @@ export function getUserInfo(): UserInfo | null {
 }
 
 export function isAuthenticated(): boolean {
-  return !!getAuthToken();
+  const token = getAuthToken();
+  if (!token) return false;
+  
+  try {
+    // Decode and validate the token structure
+    const payload = JSON.parse(atob(token.split('.')[1])) as JWTPayload;
+    
+    // Check if token has required fields
+    if (!payload.userId || !payload.email || !payload.role) {
+      clearAuthToken(); // Clear invalid token
+      return false;
+    }
+    
+    // Check if token is expired (if exp field exists)
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      clearAuthToken(); // Clear expired token
+      return false;
+    }
+    
+    return true;
+  } catch {
+    clearAuthToken(); // Clear corrupted token
+    return false;
+  }
 }
 
 export function isAdmin(): boolean {

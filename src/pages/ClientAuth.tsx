@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../lib/api';
-import { isAuthenticated } from '../lib/auth';
+import { isAuthenticated, isClient } from '../lib/auth';
 import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
 import StarRating from '../components/StarRating';
 
@@ -56,7 +56,8 @@ const ClientAuth: React.FC = () => {
 
   // Redirect if already authenticated and load reviews
   useEffect(() => {
-    if (isAuthenticated()) {
+    // Only redirect if user is authenticated AND has proper client role
+    if (isAuthenticated() && isClient()) {
       navigateAfterAuth();
     }
     loadReviews();

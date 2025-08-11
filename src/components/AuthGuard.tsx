@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { isAuthenticated, isAdmin, isClient } from '../lib/auth';
 
 interface AuthGuardProps {
@@ -14,6 +14,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, requireAdmin = false, r
   const [adminAccess, setAdminAccess] = useState(false);
   const [clientAccess, setClientAccess] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkAuth = () => {
@@ -63,7 +64,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, requireAdmin = false, r
             <h2 className="text-xl font-bold text-gray-900 mb-2">Access Denied</h2>
             <p className="text-gray-600 mb-6">You don't have permission to access this admin area.</p>
             <button
-              onClick={() => window.location.href = '/'}
+              onClick={() => navigate('/')}
               className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
             >
               Return to Home
@@ -103,7 +104,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, requireAdmin = false, r
             <h2 className="text-xl font-bold text-gray-900 mb-2">Access Denied</h2>
             <p className="text-gray-600 mb-6">Please log in as a client to access the booking system.</p>
             <button
-              onClick={() => window.location.href = '/'}
+              onClick={() => navigate('/')}
               className="bg-pink-600 text-white px-6 py-2 rounded-md hover:bg-pink-700 transition-colors"
             >
               Go to Login
