@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, User, CreditCard, Plus, Save, AlertCircle } from 'lucide-react';
 import { format, addDays } from 'date-fns';
-
-interface Service {
-  _id: string;
-  name: string;
-  duration: number;
-  price: number;
-  description: string;
-  active: boolean;
-}
+import { apiClient } from '../../lib/api';
+import type { Service } from '../../types';
 
 interface Extra {
   _id: string;
@@ -74,8 +67,7 @@ const AdminBookAppointment: React.FC = () => {
 
   const loadServices = async () => {
     try {
-      const response = await fetch('/api/services');
-      const data = await response.json();
+      const data = await apiClient.getServices();
       setServices(data.filter((service: Service) => service.active));
     } catch (error) {
       console.error('Error loading services:', error);
@@ -84,8 +76,7 @@ const AdminBookAppointment: React.FC = () => {
 
   const loadExtras = async () => {
     try {
-      const response = await fetch('/api/extras');
-      const data = await response.json();
+      const data = await apiClient.getExtras();
       setExtras(data.filter((extra: Extra) => extra.active));
     } catch (error) {
       console.error('Error loading extras:', error);
@@ -161,7 +152,7 @@ const AdminBookAppointment: React.FC = () => {
   };
 
   const handleServiceChange = (serviceId: string) => {
-    const selectedService = services.find(s => s._id === serviceId);
+    const selectedService = services.find(s => (s._id || s.id) === serviceId);
     if (selectedService) {
       setFormData(prev => ({
         ...prev,
@@ -169,23 +160,6 @@ const AdminBookAppointment: React.FC = () => {
         servicePrice: selectedService.price
       }));
     }
-  };
-
-  const handleExtraToggle = (extra: Extra) => {
-    setFormData(prev => {
-      const isSelected = prev.extras.some(e => e.id === extra._id);
-      if (isSelected) {
-        return {
-          ...prev,
-          extras: prev.extras.filter(e => e.id !== extra._id)
-        };
-      } else {
-        return {
-          ...prev,
-          extras: [...prev.extras, { id: extra._id, name: extra.name, price: extra.price }]
-        };
-      }
-    });
   };
 
   const calculateTotalPrice = () => {
@@ -212,7 +186,7 @@ const AdminBookAppointment: React.FC = () => {
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
-        service: services.find(s => s._id === formData.service)?.name || '',
+        service: services.find(s => (s._id || s.id) === formData.service)?.name || '',
         servicePrice: formData.servicePrice,
         date: formData.date,
         time: formData.time,
@@ -248,7 +222,7 @@ const AdminBookAppointment: React.FC = () => {
           body: JSON.stringify({
             customerName: formData.customerName,
             customerEmail: formData.customerEmail,
-            services: [{ name: services.find(s => s._id === formData.service)?.name || '', price: formData.servicePrice }],
+            services: [{ name: services.find(s => (s._id || s.id) === formData.service)?.name || '', price: formData.servicePrice }],
             serviceQuantities: new Map(),
             date: formData.date,
             time: formData.time,
@@ -383,7 +357,7 @@ const AdminBookAppointment: React.FC = () => {
               >
                 <option value="">Select a service</option>
                 {services.map((service) => (
-                  <option key={service._id} value={service._id}>
+                  <option key={service._id || service.id} value={service._id || service.id}>
                     {service.name} - £{service.price.toFixed(2)} ({service.duration} mins)
                   </option>
                 ))}
@@ -396,17 +370,36 @@ const AdminBookAppointment: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Additional Services (Optional)
                 </label>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {extras.map((extra) => (
-                    <label key={extra._id} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.extras.some(e => e.id === extra._id)}
-                        onChange={() => handleExtraToggle(extra)}
-                        className="mr-2"
-                      />
-                      <span>{extra.name} - £{extra.price.toFixed(2)}</span>
-                    </label>
+                    <div key={extra._id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{extra.name}</h4>
+                        <p className="text-sm text-gray-600">{extra.description}</p>
+                        <p className="text-sm font-semibold text-green-600">£{extra.price.toFixed(2)}</p>
+                      </div>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.extras.some(e => e.id === extra._id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData(prev => ({
+                                ...prev,
+                                extras: [...prev.extras, { id: extra._id, name: extra.name, price: extra.price }]
+                              }));
+                            } else {
+                              setFormData(prev => ({
+                                ...prev,
+                                extras: prev.extras.filter(e => e.id !== extra._id)
+                              }));
+                            }
+                          }}
+                          className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <span className="text-sm text-gray-700">Add this service</span>
+                      </label>
+                    </div>
                   ))}
                 </div>
               </div>

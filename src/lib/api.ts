@@ -228,6 +228,11 @@ class ApiClient {
     });
   }
 
+  // Extras methods
+  async getExtras() {
+    return this.request<any[]>('/api/extras');
+  }
+
   // Appointments methods
   async getAppointments() {
     return this.request<Appointment[]>('/api/appointments');
