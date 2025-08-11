@@ -40,9 +40,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    // If we were on an admin route and now we're on a customer route, logout
-    if (wasAdminRoute && !isAdminRoute && !location.pathname.startsWith('/admin')) {
-      handleLogout('Navigated from admin to customer view');
+    // Only logout admin users when they navigate from admin to customer routes
+    // Check if the user is actually an admin AND was on admin route AND now on customer route
+    const currentUser = getUser();
+    const isCurrentUserAdmin = currentUser?.role === 'admin';
+    
+    if (wasAdminRoute && !isAdminRoute && !location.pathname.startsWith('/admin') && isCurrentUserAdmin) {
+      handleLogout('Admin navigated from admin to customer view');
     }
     
     // Update the tracking state
@@ -68,8 +72,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               to="/" 
               className="flex items-center space-x-2"
               onClick={() => {
-                if (isAdminRoute) {
-                  handleLogout('Clicked logo from admin route');
+                const currentUser = getUser();
+                const isCurrentUserAdmin = currentUser?.role === 'admin';
+                if (isAdminRoute && isCurrentUserAdmin) {
+                  handleLogout('Admin clicked logo from admin route');
                 }
               }}
             >
