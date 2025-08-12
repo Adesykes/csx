@@ -72,7 +72,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex justify-between items-center h-16">
             <Link 
               to="/" 
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-3"
               onClick={() => {
                 const currentUser = getUser();
                 const isCurrentUserAdmin = currentUser?.role === 'admin';
@@ -81,13 +81,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 }
               }}
             >
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">CXS</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">CXS Nail Lounge</h1>
-                <p className="text-xs text-gray-500">Premium Nail Care</p>
-              </div>
+              <img 
+                src="/logo.jpeg" 
+                alt="CXS Nail Lounge Logo" 
+                className="h-12 w-auto object-contain"
+              />
             </Link>
 
             {/* Desktop Navigation */}
