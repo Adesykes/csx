@@ -163,7 +163,7 @@ export class EmailService {
   
   <h4 style="margin-bottom: 10px; color: #374151;">Contact Us</h4>
   <p>📍 CXS Nail Lounge</p>
-  <p>📞 Contact us for inquiries</p>
+  <p>📞 07305840749</p>
   <p>✉️ cxsnaillounge1@gmail.com</p>
 </div>
 
@@ -222,7 +222,7 @@ Address: CXS Nail Lounge
 104 Heath Road
 Holmewood
 S42 5SH
-Phone: Contact us for inquiries
+Phone: 07305840749
 Email: cxsnaillounge1@gmail.com
 
 We look forward to seeing you soon!
