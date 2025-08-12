@@ -84,8 +84,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <img 
                 src="/logo-cropped.jpeg" 
                 alt="CXS Nail Lounge Logo" 
-                className="h-48 w-auto object-contain bg-amber-50"
-                style={{ background: '#fffbeb' }}
+                className="h-48 w-auto object-contain bg-pink-50"
+                style={{ background: '#fdf2f8' }}
               />
             </Link>
 
