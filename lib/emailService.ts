@@ -109,14 +109,14 @@ export class EmailService {
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; color: white; border-radius: 10px 10px 0 0;">
-          <h1 style="margin: 0; font-size: 28px;">CSX Nail Lounge</h1>
+          <h1 style="margin: 0; font-size: 28px;">CXS Nail Lounge</h1>
           <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Booking Confirmation</p>
         </div>
         
         <div style="background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
           <p style="font-size: 18px; margin-bottom: 20px;">Dear ${booking.customerName},</p>
           
-          <p>Thank you for booking with CSX Nail Lounge! Your appointment has been confirmed.</p>
+          <p>Thank you for booking with CXS Nail Lounge! Your appointment has been confirmed.</p>
           
           <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="margin-top: 0; color: #374151;">Appointment Details</h3>
@@ -169,7 +169,7 @@ export class EmailService {
 
           <p style="text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px;">
             We look forward to seeing you soon!<br>
-            <strong>CSX Nail Lounge Team</strong>
+            <strong>CXS Nail Lounge Team</strong>
           </p>
         </div>
       </body>
@@ -191,11 +191,11 @@ export class EmailService {
     }).join('\n');
 
     return `
-CSX NAIL LOUNGE - BOOKING CONFIRMATION
+CXS NAIL LOUNGE - BOOKING CONFIRMATION
 
 Dear ${booking.customerName},
 
-Thank you for booking with CSX Nail Lounge! Your appointment has been confirmed.
+Thank you for booking with CXS Nail Lounge! Your appointment has been confirmed.
 
 APPOINTMENT DETAILS:
 Date: ${booking.date}
