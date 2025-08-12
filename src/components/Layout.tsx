@@ -72,7 +72,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex justify-between items-center h-16">
             <Link 
               to="/" 
-              className="flex items-center space-x-3"
+              className="flex items-center justify-center sm:justify-start space-x-3"
               onClick={() => {
                 const currentUser = getUser();
                 const isCurrentUserAdmin = currentUser?.role === 'admin';
@@ -84,7 +84,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <img 
                 src="/logo-cropped.jpeg" 
                 alt="CXS Nail Lounge Logo" 
-                className="h-32 w-auto object-contain bg-pink-50 border-4 border-pink-600 rounded-lg"
+                className="h-20 sm:h-32 w-auto object-contain bg-pink-50 border-2 border-pink-300 rounded-lg shadow-sm"
                 style={{ background: '#fdf2f8' }}
               />
             </Link>
