@@ -184,6 +184,26 @@ app.post('/api/auth', async (req, res) => {
           return res.status(400).json({ error: 'Email and password are required' });
         }
 
+        // Check against environment variables first (like production)
+        if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+          const adminToken = jwt.sign(
+            { userId: 'admin', email: process.env.ADMIN_EMAIL, role: 'admin' },
+            process.env.JWT_SECRET!,
+            { expiresIn: '24h' }
+          );
+
+          return res.json({
+            token: adminToken,
+            user: {
+              id: 'admin',
+              email: process.env.ADMIN_EMAIL,
+              name: 'Admin',
+              role: 'admin'
+            }
+          });
+        }
+
+        // Fallback to database check
         const adminUser = await usersCollection.findOne({ email, role: 'admin' });
         if (!adminUser) {
           return res.status(401).json({ error: 'Invalid admin credentials' });
