@@ -108,10 +108,18 @@ const ReviewsPage = (): JSX.Element => {
               </div>
             </div>
             <a
-              href="https://www.facebook.com/people/CXS-Nail-Lounge/61556203358223/?sk=reviews"
+              href="https://www.facebook.com/people/CXS-Nail-Lounge/61556203358223/"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-white text-blue-600 px-4 py-2 md:px-6 md:py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2 text-sm md:text-base w-full md:w-auto"
+              onClick={(e) => {
+                e.preventDefault();
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const url = isMobile 
+                  ? 'https://m.facebook.com/people/CXS-Nail-Lounge/61556203358223/'
+                  : 'https://www.facebook.com/people/CXS-Nail-Lounge/61556203358223/?sk=reviews';
+                window.open(url, '_blank', 'noopener,noreferrer');
+              }}
             >
               <span>View Facebook Reviews</span>
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
