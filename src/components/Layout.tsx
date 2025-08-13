@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star, Instagram, CalendarDays, Plus } from 'lucide-react';
+import { Calendar, Users, DollarSign, Settings, Menu, X, Clock, XCircle, LogOut, Star, Instagram, CalendarDays, Plus, Facebook } from 'lucide-react';
 import { clearAuthToken, isAuthenticated, isClient, getUser, getUserInfo, logout } from '../lib/auth';
 import { apiClient } from '../lib/api';
 import { usePendingReviews } from '../hooks/usePendingReviews';
@@ -176,6 +176,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <Instagram className="h-4 w-4" />
                     <span>Instagram</span>
                   </a>
+                  <a
+                    href="https://www.facebook.com/share/1ANRsm8bFG/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                  >
+                    <Facebook className="h-4 w-4" />
+                    <span>Facebook</span>
+                  </a>
                   <div className="flex items-center space-x-3">
                     <span className="text-sm text-gray-700">Welcome, {displayName}</span>
                     <button
@@ -209,6 +218,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   >
                     <Instagram className="h-4 w-4" />
                     <span>Instagram</span>
+                  </a>
+                  <a
+                    href="https://www.facebook.com/share/1ANRsm8bFG/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                  >
+                    <Facebook className="h-4 w-4" />
+                    <span>Facebook</span>
                   </a>
                   <Link
                     to="/admin"
@@ -331,6 +349,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <Instagram className="h-5 w-5" />
                     <span>Instagram</span>
                   </a>
+                  <a
+                    href="https://www.facebook.com/share/1ANRsm8bFG/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Facebook className="h-5 w-5" />
+                    <span>Facebook</span>
+                  </a>
                   <div className="px-3 py-2 text-sm text-gray-600">
                     Welcome, {displayName}
                   </div>
@@ -367,6 +395,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   >
                     <Instagram className="h-5 w-5" />
                     <span>Instagram</span>
+                  </a>
+                  <a
+                    href="https://www.facebook.com/share/1ANRsm8bFG/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Facebook className="h-5 w-5" />
+                    <span>Facebook</span>
                   </a>
                   <Link
                     to="/admin"
