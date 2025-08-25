@@ -158,9 +158,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Ping endpoint to keep server alive
-app.get('/ping', (req, res) => {
-  res.status(200).json({ 
+
+// Ping endpoint to keep server alive (CORS open for this route only)
+app.get('/ping', (req, res, next) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.status(200).json({
     message: 'pong',
     timestamp: new Date().toISOString()
   });

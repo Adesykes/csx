@@ -215,21 +215,21 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Ping endpoint to keep server alive and warm up database
+// Ping endpoint to keep server alive and warm up database (CORS open for this route only)
 app.get('/ping', async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
   try {
     // Warm up database connection
     const db = await getDatabase();
     await db.admin().ping();
-    
-    res.status(200).json({ 
+    res.status(200).json({
       message: 'pong',
       timestamp: new Date().toISOString(),
       database: 'connected'
     });
   } catch (error) {
     console.error('Database ping failed:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Database connection error',
       timestamp: new Date().toISOString(),
       database: 'error'
